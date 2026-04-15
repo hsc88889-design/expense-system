@@ -1139,7 +1139,7 @@ function renderLease(){
       <td><input class="il il-n" type="number" value="${l.totalArea||''}" step="0.01" onchange="updateLeaseNum(${lid},'totalArea',this.value)"></td>
       <td><input class="il il-n" type="number" value="${l.pubArea||''}" step="0.01" onchange="updateLeaseNum(${lid},'pubArea',this.value)"></td>
       <td><input class="il" type="date" value="${l.startDate||''}" style="font-size:11.5px;font-family:var(--mono)" onchange="updateLease(${lid},'startDate',this.value)"></td>
-      <td>${exp?`<span class="${exp.cls}">${exp.label}</span>`:`<input class="il" type="date" value="${l.endDate||''}" style="font-size:11.5px;font-family:var(--mono)" onchange="updateLease(${lid},'endDate',this.value)">`}</td>
+      <td><input class="il" type="date" value="${l.endDate||''}" style="font-size:11.5px;font-family:var(--mono)" onchange="updateLease(${lid},'endDate',this.value)">${exp?`<span class="${exp.cls}" style="display:block;font-size:10px;margin-top:2px">${exp.label}</span>`:''}</td>
       <td style="text-align:center"><button class="btn btn-del btn-sm" onclick="delLease(${lid})">刪</button></td>
     </tr>
     <tr id="lease-tier-row-${lid}" style="display:none">
