@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>費用分攤管理系統 v2</title>
+<title>費用分攤管理系統 v3</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+TC:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
@@ -222,6 +222,47 @@ tbody tr:hover td{background:var(--surface2)}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
 ::-webkit-scrollbar-thumb:hover{background:var(--text3)}
+
+/* ── Tier (費率階段) ── */
+.tier-list{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-top:6px}
+.tier-row{display:grid;grid-template-columns:110px 110px 130px auto 80px 52px;gap:0;border-bottom:1px solid var(--border);align-items:center}
+.tier-row:last-child{border-bottom:none}
+.tier-row:hover{background:var(--surface2)}
+.tier-cell{padding:5px 8px;font-size:12px;font-family:var(--mono)}
+.tier-cell.label{font-family:var(--font);color:var(--text2)}
+.tier-hd{background:var(--surface2);font-size:10.5px;font-weight:700;color:var(--text2);letter-spacing:.04em}
+.tier-free{display:flex;flex-wrap:wrap;gap:3px;padding:4px 8px}
+.tier-free-tag{font-size:10px;background:var(--amber-bg);color:var(--amber);border:1px solid #f0c060;padding:1px 6px;border-radius:8px}
+.lease-expiry-ok{font-size:10.5px;color:var(--teal);font-family:var(--mono)}
+.lease-expiry-warn{font-size:10.5px;color:var(--amber);font-weight:600;font-family:var(--mono)}
+.lease-expiry-urgent{font-size:10.5px;color:var(--red);font-weight:700;font-family:var(--mono)}
+
+/* ── Annual View ── */
+.annual-table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius)}
+.annual-table{border-collapse:collapse;font-size:11.5px;white-space:nowrap;width:100%}
+.annual-table th:first-child,.annual-table td:first-child{white-space:normal}
+.annual-table th{background:var(--surface2);padding:5px 10px;border-bottom:1px solid var(--border);border-right:1px solid var(--border);font-size:10.5px;font-weight:700;color:var(--text2);text-align:right;position:sticky;top:0}
+.annual-table th:first-child{text-align:left;min-width:220px;width:220px;max-width:280px;position:sticky;left:0;z-index:2;background:var(--surface2)}
+.annual-table td{padding:5px 10px;border-bottom:1px solid var(--border);border-right:1px solid var(--border);text-align:right;font-family:var(--mono);color:var(--text)}
+.annual-table td:first-child{text-align:left;font-family:var(--font);position:sticky;left:0;background:var(--surface);z-index:1;min-width:220px;width:220px;max-width:280px;white-space:normal;word-break:break-word;line-height:1.4}
+.annual-table tr:hover td{background:var(--surface2)}
+.annual-table tr:hover td:first-child{background:var(--surface2)}
+.annual-table .tf-row td{background:var(--surface2);font-weight:700;border-top:2px solid var(--border2)}
+.annual-table .tf-row td:first-child{background:var(--surface2)}
+.annual-table .free-cell{color:var(--amber);font-style:italic}
+.annual-table .total-col{background:var(--blue-bg)!important;color:var(--blue);font-weight:700;border-left:2px solid var(--blue-light)}
+.annual-section-hd{font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;padding:10px 0 4px}
+
+/* ── Monthly cost mode toggle ── */
+.cost-mode-toggle{display:flex;gap:0;border:1px solid var(--border2);border-radius:var(--radius);overflow:hidden;margin-left:auto}
+.cost-mode-btn{padding:3px 10px;font-size:11.5px;cursor:pointer;border:none;background:var(--surface);color:var(--text2);font-family:inherit;transition:all .1s}
+.cost-mode-btn.on{background:var(--blue);color:#fff}
+.monthly-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin-top:6px}
+.monthly-cell{display:flex;flex-direction:column;gap:2px}
+.monthly-cell label{font-size:10px;color:var(--text3);text-align:center}
+.monthly-cell input{text-align:right;font-size:11.5px;padding:3px 5px;font-family:var(--mono);width:100%}
+.auto-applied{background:var(--teal-bg)!important;border-color:#b8dfa0!important}
+
 </style>
 </head>
 <body>
@@ -230,7 +271,7 @@ tbody tr:hover td{background:var(--surface2)}
   <div class="hdr-logo">
     <div class="hdr-icon">費</div>
     費用分攤管理系統
-    <span class="hdr-version">v2</span>
+    <span class="hdr-version">v3</span>
   </div>
   <div class="hdr-actions">
     <span class="save-txt" id="save-txt">—</span>
@@ -264,6 +305,10 @@ tbody tr:hover td{background:var(--surface2)}
   <div class="nav" id="nav-result" onclick="go('result',this)">
     <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><path d="M2 12l4-4 3 3 5-6"/></svg>
     分攤結果
+  </div>
+  <div class="nav" id="nav-annual" onclick="go('annual',this)">
+    <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><rect x="2" y="2" width="12" height="12" rx="1.5"/><path d="M5 2v12M2 6h12M2 10h12"/></svg>
+    年度彙總
   </div>
   <div class="nav" id="nav-analysis" onclick="go('analysis',this)">
     <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/></svg>
@@ -305,25 +350,27 @@ tbody tr:hover td{background:var(--surface2)}
       <div class="card-title">租約清單</div>
       <button class="btn btn-p btn-sm" onclick="openLeaseModal()">+ 新增租約</button>
     </div>
-    <div class="notice">每筆租約對應一個區域（如 4FA、4FB）。設定區域總坪數、公設坪數與月租金後，系統自動計算各員工分攤比例。<br>坪數換算公式：長(cm) × 寬(cm) ÷ <strong>10,000</strong>（→ m²）÷ <strong>3.3058</strong>（→ 坪）。公設坪數依個人座位坪數佔區域座位坪數合計的比例自動分配。</div>
+    <div class="notice">每筆租約對應一個區域（如 4FA、4FB）。設定區域總坪數、公設坪數後，系統自動計算各員工分攤比例。<br>坪數換算公式：長(cm) × 寬(cm) ÷ <strong>10,000</strong>（→ m²）÷ <strong>3.3058</strong>（→ 坪）。公設坪數依個人座位坪數佔區域座位坪數合計的比例自動分配。<br>租金金額請設定費率階段（點各列展開），系統依分攤期間自動帶出當期租金。</div>
     <div class="tw">
       <table style="table-layout:auto;width:100%">
         <thead><tr>
-          <th style="width:70px">區域代號</th>
-          <th style="width:90px">公司</th>
-          <th style="width:110px">房東</th>
+          <th style="width:28px"></th>
+          <th style="width:68px">區域代號</th>
+          <th style="width:88px">公司</th>
+          <th style="width:108px">房東</th>
           <th>地址</th>
-          <th style="width:105px;text-align:right">區域總坪數</th>
-          <th style="width:105px;text-align:right">公設坪數</th>
-          <th style="width:135px;text-align:right">月租金（元）</th>
+          <th style="width:100px;text-align:right">區域總坪數</th>
+          <th style="width:100px;text-align:right">公設坪數</th>
+          <th style="width:108px">起租日</th>
+          <th style="width:108px">到期日</th>
           <th style="width:52px;text-align:center">刪</th>
         </tr></thead>
         <tbody id="lease-tbody"></tbody>
         <tfoot><tr class="tf">
-          <td colspan="4">合計</td>
+          <td colspan="5">合計</td>
           <td style="text-align:right;font-family:var(--mono)" id="lease-total-area">—</td>
           <td></td>
-          <td style="text-align:right;font-family:var(--mono)" id="lease-total-rent">$0</td>
+          <td colspan="2" style="text-align:right;font-family:var(--mono);font-size:11px;color:var(--text3)" id="lease-expiry-summary"></td>
           <td></td>
         </tr></tfoot>
       </table>
@@ -509,6 +556,48 @@ tbody tr:hover td{background:var(--surface2)}
       </div>
     </div>
     <div id="analysis-diff"></div>
+  </div>
+</div>
+
+<!-- ══ 年度彙總 ══ -->
+<div class="page" id="page-annual">
+  <div class="pg-title">
+    <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 18 18"><rect x="2" y="2" width="14" height="14" rx="2"/><path d="M5 2v14M2 7h14M2 11h14"/></svg>
+    年度彙總 / 預算編列
+  </div>
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-title">檢視設定</div>
+    </div>
+    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:7px">
+        <label style="font-size:12px;color:var(--text2);font-weight:600">年度</label>
+        <select id="annual-year" style="font-size:12.5px;font-family:var(--mono)" onchange="renderAnnual()"></select>
+      </div>
+      <div style="display:flex;align-items:center;gap:7px">
+        <label style="font-size:12px;color:var(--text2);font-weight:600">檢視</label>
+        <select id="annual-view" style="font-size:12.5px" onchange="renderAnnual()">
+          <option value="dept">部門分攤彙總</option>
+          <option value="cost">費用項目走勢</option>
+          <option value="both">兩者都顯示</option>
+        </select>
+      </div>
+      <button class="btn btn-sm" onclick="exportAnnualExcel()">匯出 Excel</button>
+      <div id="annual-auto-badge" style="display:none" class="notice ok" style="margin:0;padding:4px 10px;font-size:11.5px">✓ 已依費率階段自動帶出租金</div>
+    </div>
+    <div id="annual-warn" style="margin-top:8px"></div>
+  </div>
+  <div id="annual-cost-section" style="display:none">
+    <div class="annual-section-hd">費用項目走勢（各月金額）</div>
+    <div class="card" style="padding:12px">
+      <div class="annual-table-wrap"><table class="annual-table" id="annual-cost-table"></table></div>
+    </div>
+  </div>
+  <div id="annual-dept-section" style="display:none">
+    <div class="annual-section-hd">部門分攤彙總（各月合計）</div>
+    <div class="card" style="padding:12px">
+      <div class="annual-table-wrap"><table class="annual-table" id="annual-dept-table"></table></div>
+    </div>
   </div>
 </div>
 
@@ -773,12 +862,12 @@ const DS = {
     {id:903,company:'USF',deptCode:'',deptName:'（USF 合計）',count:0},
   ],
   leases:[
-    {id:1,zone:'4FA',company:'UTI',landlord:'大眾電腦',addr:'陽光街300號4樓',totalArea:366.02,pubArea:256.79,rent:390889.61},
-    {id:2,zone:'4FB',company:'UTI',landlord:'大眾電腦',addr:'陽光街296號4樓',totalArea:384.83,pubArea:213.14,rent:410977.68},
-    {id:3,zone:'4FC',company:'UTI',landlord:'大眾電腦',addr:'陽光街298號4樓',totalArea:52.14,pubArea:27.99,rent:55682.71},
-    {id:4,zone:'4FC',company:'RGC',landlord:'大眾電腦',addr:'陽光街298號',totalArea:77.54,pubArea:61.80,rent:82931},
-    {id:5,zone:'6FB',company:'UTI',landlord:'新光人壽',addr:'陽光街300號6樓',totalArea:368.63,pubArea:240.75,rent:406267},
-    {id:6,zone:'B1F',company:'UTI',landlord:'大眾電腦',addr:'陽光街300號B1',totalArea:60.72,pubArea:0,rent:64964},
+    {id:1,zone:'4FA',company:'UTI',landlord:'大眾電腦',addr:'陽光街300號4樓',totalArea:366.02,pubArea:256.79,rent:390889.61,startDate:'2024-04-01',endDate:'2027-03-31',tiers:[{id:9001,from:'2024-04-01',to:'2027-03-31',rent:390889.61,freeMonths:[]}]},
+    {id:2,zone:'4FB',company:'UTI',landlord:'大眾電腦',addr:'陽光街296號4樓',totalArea:384.83,pubArea:213.14,rent:410977.68,startDate:'2024-04-01',endDate:'2027-03-31',tiers:[{id:9002,from:'2024-04-01',to:'2027-03-31',rent:410977.68,freeMonths:[]}]},
+    {id:3,zone:'4FC',company:'UTI',landlord:'大眾電腦',addr:'陽光街298號4樓',totalArea:52.14,pubArea:27.99,rent:55682.71,startDate:'2024-04-01',endDate:'2027-03-31',tiers:[{id:9003,from:'2024-04-01',to:'2027-03-31',rent:55682.71,freeMonths:[]}]},
+    {id:4,zone:'4FC',company:'RGC',landlord:'大眾電腦',addr:'陽光街298號',totalArea:77.54,pubArea:61.80,rent:82931,startDate:'2024-04-01',endDate:'2027-03-31',tiers:[{id:9004,from:'2024-04-01',to:'2027-03-31',rent:82931,freeMonths:[]}]},
+    {id:5,zone:'6FB',company:'UTI',landlord:'新光人壽',addr:'陽光街300號6樓',totalArea:368.63,pubArea:240.75,rent:406267,startDate:'2024-04-01',endDate:'2027-03-31',tiers:[{id:9005,from:'2024-04-01',to:'2027-03-31',rent:406267,freeMonths:[]}]},
+    {id:6,zone:'B1F',company:'UTI',landlord:'大眾電腦',addr:'陽光街300號B1',totalArea:60.72,pubArea:0,rent:64964,startDate:'2024-04-01',endDate:'2027-03-31',tiers:[{id:9006,from:'2024-04-01',to:'2027-03-31',rent:64964,freeMonths:[]}]},
   ],
   emps:[],
   costGroups:[
@@ -811,7 +900,24 @@ const COMPANIES = ['UTI','RGC','USF'];
 function load(){
   try{
     const r = localStorage.getItem('alloc_v4');
-    if(r){ S = JSON.parse(r); _uid = 2000; if(!S.headcounts) S.headcounts = JSON.parse(JSON.stringify(DS.headcounts)); }
+    if(r){
+      S = JSON.parse(r); _uid = 2000;
+      if(!S.headcounts) S.headcounts = JSON.parse(JSON.stringify(DS.headcounts));
+      // v3 migration: add tiers/dates to leases that don't have them
+      (S.leases||[]).forEach(l=>{
+        if(!l.tiers) l.tiers = [{id:nid(),from:l.startDate||'',to:l.endDate||'',rent:l.rent||0,freeMonths:[]}];
+        if(!l.startDate) l.startDate = '';
+        if(!l.endDate) l.endDate = '';
+      });
+      // v3 migration: add monthlyAmounts to cost items
+      (S.costGroups||[]).forEach(g=>{
+        (g.items||[]).forEach(c=>{
+          if(!c.costMode) c.costMode = 'single';
+          if(!c.monthlyAmounts) c.monthlyAmounts = Array(12).fill(0);
+          if(!c.annualBudget) c.annualBudget = 0;
+        });
+      });
+    }
     else S = JSON.parse(JSON.stringify(DS));
   } catch(e){ S = JSON.parse(JSON.stringify(DS)); }
 }
@@ -864,6 +970,90 @@ function areaRatio(e){
   return allocArea(e)/lease.totalArea;
 }
 
+// ── 期間解析 ──────────────────────────────────────────
+function parsePeriod(str){
+  if(!str) return null;
+  let m = str.match(/^(\d+)年(\d+)月$/);
+  if(m){ return {year:+m[1]+1911, month:+m[2]}; }
+  m = str.match(/^(\d{4})[-\/](\d{1,2})$/);
+  if(m) return {year:+m[1], month:+m[2]};
+  m = str.match(/^(\d{4})年(\d+)月$/);
+  if(m) return {year:+m[1], month:+m[2]};
+  return null;
+}
+
+function getLeaseTierRent(lease, year, month){
+  if(!lease) return 0;
+  const tiers = lease.tiers||[];
+  if(!tiers.length) return lease.rent||0;
+  const target = new Date(year, month-1, 15);
+  for(const t of tiers){
+    const from = t.from ? new Date(t.from) : null;
+    const to   = t.to   ? new Date(t.to+'T23:59:59') : null;
+    if((!from||target>=from) && (!to||target<=to)){
+      if((t.freeMonths||[]).includes(month)) return 0;
+      return t.rent||0;
+    }
+  }
+  return 0;
+}
+
+function getCostAmountForMonth(cost, year, month){
+  if(cost.costMode==='monthly') return (cost.monthlyAmounts||[])[month-1]||0;
+  if(cost.costMode==='annual_div12') return Math.round((cost.annualBudget||0)/12);
+  if(cost.zoneId){
+    const lease = getLease(cost.zoneId);
+    if(lease && (lease.tiers||[]).length) return getLeaseTierRent(lease, year, month);
+  }
+  return cost.amount||0;
+}
+
+// 依當前期間將所有費用項目金額「快照」成正確值，供計算使用
+// 不修改原始資料，只回傳一份新陣列
+function resolveCosts(year, month){
+  return allCosts().map(c => {
+    const resolvedAmount = getCostAmountForMonth(c, year, month);
+    return {...c, amount: resolvedAmount};
+  });
+}
+
+// 取得當前期間的已解析費用（若無期間則用 cost.amount 原值）
+function getCurrentResolvedCosts(){
+  const p = parsePeriod(S.period);
+  if(p) return resolveCosts(p.year, p.month);
+  return allCosts(); // 無期間時直接用原值
+}
+
+function autoApplyTiers(){
+  const p = parsePeriod(S.period);
+  if(!p) return 0;
+  let updated = 0;
+  (S.costGroups||[]).forEach(g=>{
+    (g.items||[]).forEach(c=>{
+      if(c.zoneId){
+        const lease = getLease(c.zoneId);
+        if(lease && (lease.tiers||[]).length){
+          const newAmt = getLeaseTierRent(lease, p.year, p.month);
+          if(c.amount !== newAmt){ c.amount = newAmt; updated++; }
+        }
+      }
+    });
+  });
+  return updated;
+}
+
+function leaseExpiryStatus(lease){
+  if(!lease.endDate) return null;
+  const end = new Date(lease.endDate);
+  const today = new Date();
+  const days = Math.round((end-today)/(1000*60*60*24));
+  if(days < 0) return {cls:'lease-expiry-urgent', label:'已到期 '+Math.abs(days)+' 天'};
+  if(days <= 60) return {cls:'lease-expiry-urgent', label:days+' 天後到期'};
+  if(days <= 180) return {cls:'lease-expiry-warn', label:days+' 天後到期'};
+  return {cls:'lease-expiry-ok', label: lease.endDate};
+}
+
+// ─────────────────────────────────────────────────────
 function totalManualHC(company){
   return (S.headcounts||[]).filter(h => !company || h.company === company).reduce((s,h) => s+(h.count||0), 0);
 }
@@ -907,25 +1097,118 @@ function empCostAlloc(cost, emp){
 function renderLease(){
   const leases = S.leases||[];
   document.getElementById('nb-lease').textContent = leases.length;
-  const totalRent = leases.reduce((s,l) => s+(l.rent||0), 0);
-  document.getElementById('lease-total-rent').textContent = fmtMoney(totalRent);
   document.getElementById('lease-total-area').textContent = fmt4(leases.reduce((s,l) => s+(l.totalArea||0), 0))+' 坪';
+
+  // Expiry summary
+  const urgentCount = leases.filter(l=>{const s=leaseExpiryStatus(l);return s&&s.cls==='lease-expiry-urgent';}).length;
+  const warnCount = leases.filter(l=>{const s=leaseExpiryStatus(l);return s&&s.cls==='lease-expiry-warn';}).length;
+  const sumEl = document.getElementById('lease-expiry-summary');
+  if(sumEl) sumEl.textContent = urgentCount?'⚠ '+urgentCount+' 份租約需注意到期':warnCount?'⚡ '+warnCount+' 份租約即將到期':'';
+
+  const MONTHS = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
 
   document.getElementById('lease-tbody').innerHTML = leases.map((l) => {
     const lid = l.id;
+    const exp = leaseExpiryStatus(l);
+    const tiers = l.tiers||[];
+    const tierRows = tiers.map((t,ti)=>{
+      const freeOpts = MONTHS.map((mn,mi)=>`<label style="font-size:11px;display:flex;align-items:center;gap:2px;cursor:pointer"><input type="checkbox" ${(t.freeMonths||[]).includes(mi+1)?'checked':''} onchange="toggleTierFreeMonth(${lid},${t.id},${mi+1},this.checked)" style="width:auto;margin:0"> ${mn}</label>`).join('');
+      return `<tr style="background:var(--gold-bg)">
+        <td colspan="2" style="padding-left:32px;font-size:11px;color:var(--gold)">階段 ${ti+1}</td>
+        <td><input class="il" type="date" value="${t.from||''}" style="font-size:11.5px;font-family:var(--mono)" onchange="updateTier(${lid},${t.id},'from',this.value)"></td>
+        <td><input class="il" type="date" value="${t.to||''}" style="font-size:11.5px;font-family:var(--mono)" onchange="updateTier(${lid},${t.id},'to',this.value)"></td>
+        <td style="text-align:right"><input class="il il-n" value="${t.rent?fmt(t.rent):''}" style="text-align:right;font-family:var(--mono)"
+          onfocus="this.value=this.value.replace(/,/g,'')"
+          onblur="const v=+this.value.replace(/,/g,'')||0;updateTierNum(${lid},${t.id},'rent',v);this.value=v?fmt(v):''"></td>
+        <td colspan="3" style="padding:4px 8px">
+          <div style="font-size:10.5px;color:var(--text3);margin-bottom:3px">免租月份：</div>
+          <div style="display:flex;flex-wrap:wrap;gap:4px">${freeOpts}</div>
+        </td>
+        <td style="text-align:center"><button class="btn btn-del btn-sm" onclick="delTier(${lid},${t.id})">刪</button></td>
+      </tr>`;
+    }).join('');
+
     return `<tr>
+      <td style="text-align:center;padding:0 4px">
+        <button class="btn btn-sm btn-ghost" onclick="toggleLeaseExpand(${lid})" style="font-size:10px;padding:2px 5px" title="展開費率階段">▶</button>
+      </td>
       <td><input class="il" value="${esc(l.zone)}" onchange="updateLease(${lid},'zone',this.value)"></td>
       <td><input class="il" value="${esc(l.company)}" onchange="updateLease(${lid},'company',this.value)"></td>
       <td><input class="il" value="${esc(l.landlord)}" onchange="updateLease(${lid},'landlord',this.value)"></td>
       <td><input class="il" value="${esc(l.addr)}" style="width:100%" onchange="updateLease(${lid},'addr',this.value)"></td>
       <td><input class="il il-n" type="number" value="${l.totalArea||''}" step="0.01" onchange="updateLeaseNum(${lid},'totalArea',this.value)"></td>
       <td><input class="il il-n" type="number" value="${l.pubArea||''}" step="0.01" onchange="updateLeaseNum(${lid},'pubArea',this.value)"></td>
-      <td><input class="il il-n" value="${l.rent ? fmt(l.rent) : ''}" style="text-align:right;font-family:var(--mono)"
-        onfocus="this.value=this.value.replace(/,/g,'')"
-        onblur="const v=+this.value.replace(/,/g,'')||0;updateLeaseNum(${lid},'rent',v);this.value=v?fmt(v):''"></td>
+      <td><input class="il" type="date" value="${l.startDate||''}" style="font-size:11.5px;font-family:var(--mono)" onchange="updateLease(${lid},'startDate',this.value)"></td>
+      <td>${exp?`<span class="${exp.cls}">${exp.label}</span>`:`<input class="il" type="date" value="${l.endDate||''}" style="font-size:11.5px;font-family:var(--mono)" onchange="updateLease(${lid},'endDate',this.value)">`}</td>
       <td style="text-align:center"><button class="btn btn-del btn-sm" onclick="delLease(${lid})">刪</button></td>
+    </tr>
+    <tr id="lease-tier-row-${lid}" style="display:none">
+      <td colspan="10" style="padding:0 8px 8px 8px;background:var(--gold-bg)">
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 0 4px">
+          <span style="font-size:11px;font-weight:700;color:var(--gold)">費率階段</span>
+          <button class="btn btn-sm" style="font-size:11px;color:var(--gold);border-color:#d4a017" onclick="addTier(${lid})">+ 新增階段</button>
+        </div>
+        <div style="border:1px solid #f0c060;border-radius:var(--radius);overflow:hidden">
+          <div style="display:grid;grid-template-columns:28px 28px 120px 120px 130px 1fr 52px;background:var(--amber-bg);border-bottom:1px solid #f0c060">
+            <div style="padding:4px 8px;font-size:10.5px;font-weight:700;color:var(--amber)"></div>
+            <div style="padding:4px 8px;font-size:10.5px;font-weight:700;color:var(--amber)"></div>
+            <div style="padding:4px 8px;font-size:10.5px;font-weight:700;color:var(--amber)">起始日</div>
+            <div style="padding:4px 8px;font-size:10.5px;font-weight:700;color:var(--amber)">結束日</div>
+            <div style="padding:4px 8px;font-size:10.5px;font-weight:700;color:var(--amber);text-align:right">月租金（元）</div>
+            <div style="padding:4px 8px;font-size:10.5px;font-weight:700;color:var(--amber)">免租月份</div>
+            <div></div>
+          </div>
+          <table style="width:100%;border-collapse:collapse" id="tier-table-${lid}">
+            ${tierRows||'<tr><td colspan="7" style="padding:10px;text-align:center;color:var(--text3);font-size:12px">尚無費率階段，點「新增階段」開始設定</td></tr>'}
+          </table>
+        </div>
+      </td>
     </tr>`;
   }).join('');
+}
+
+let _leaseExpanded = {};
+function toggleLeaseExpand(lid){
+  _leaseExpanded[lid] = !_leaseExpanded[lid];
+  const row = document.getElementById('lease-tier-row-'+lid);
+  if(row) row.style.display = _leaseExpanded[lid] ? '' : 'none';
+  // update arrow button
+  const btn = row?.previousElementSibling?.querySelector('button');
+  if(btn) btn.textContent = _leaseExpanded[lid] ? '▼' : '▶';
+}
+
+function addTier(lid){
+  const l = getLease(lid);
+  if(!l) return;
+  l.tiers = l.tiers||[];
+  l.tiers.push({id:nid(), from:'', to:'', rent:l.rent||0, freeMonths:[]});
+  ds(); renderLease();
+  if(!_leaseExpanded[lid]) toggleLeaseExpand(lid);
+}
+function delTier(lid, tid){
+  const l = getLease(lid);
+  if(!l) return;
+  l.tiers = (l.tiers||[]).filter(t=>t.id!==tid);
+  ds(); renderLease();
+}
+function updateTier(lid, tid, key, val){
+  const l = getLease(lid);
+  const t = (l?.tiers||[]).find(t=>t.id===tid);
+  if(t){ t[key]=val; ds(); }
+}
+function updateTierNum(lid, tid, key, val){
+  const l = getLease(lid);
+  const t = (l?.tiers||[]).find(t=>t.id===tid);
+  if(t){ t[key]=+String(val).replace(/,/g,'')||0; ds(); renderLease(); }
+}
+function toggleTierFreeMonth(lid, tid, month, checked){
+  const l = getLease(lid);
+  const t = (l?.tiers||[]).find(t=>t.id===tid);
+  if(!t) return;
+  t.freeMonths = t.freeMonths||[];
+  if(checked){ if(!t.freeMonths.includes(month)) t.freeMonths.push(month); }
+  else { t.freeMonths = t.freeMonths.filter(m=>m!==month); }
+  ds();
 }
 
 function updateLease(id, key, val){ const l = getLease(id); if(l){ l[key]=val; ds(); if(key==='zone') renderAll(); } }
@@ -933,9 +1216,11 @@ function updateLeaseNum(id, key, val){ const l = getLease(id); if(l){ l[key]=+St
 
 function openLeaseModal(){
   showMod('新增租約',`
-    <div class="mf"><label>區域代號（如 4FA）</label><input type="text" id="ml-zone" autofocus></div>
-    <div class="mf"><label>公司</label>
-      <select id="ml-co">${COMPANIES.map(c=>`<option value="${c}">${c}</option>`).join('')}</select>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="mf"><label>區域代號（如 4FA）</label><input type="text" id="ml-zone" autofocus></div>
+      <div class="mf"><label>公司</label>
+        <select id="ml-co">${COMPANIES.map(c=>`<option value="${c}">${c}</option>`).join('')}</select>
+      </div>
     </div>
     <div class="mf"><label>房東</label><input type="text" id="ml-ll"></div>
     <div class="mf"><label>地址</label><input type="text" id="ml-addr"></div>
@@ -943,17 +1228,25 @@ function openLeaseModal(){
       <div class="mf"><label>區域總坪數</label><input type="number" id="ml-area" step="0.01"></div>
       <div class="mf"><label>公設坪數（固定值）</label><input type="number" id="ml-pub" step="0.01"></div>
     </div>
-    <div class="mf"><label>月租金（元）</label><input type="number" id="ml-rent"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="mf"><label>起租日</label><input type="date" id="ml-start"></div>
+      <div class="mf"><label>到期日</label><input type="date" id="ml-end"></div>
+    </div>
+    <div class="mf"><label>初始月租金（元）— 可建立後再新增費率階段</label><input type="number" id="ml-rent"></div>
   `,()=>{
     const zone = document.getElementById('ml-zone').value.trim();
     if(!zone){ toast('請輸入區域代號'); return; }
+    const rent = +document.getElementById('ml-rent').value||0;
+    const start = document.getElementById('ml-start').value;
+    const end = document.getElementById('ml-end').value;
     S.leases.push({
       id: nid(), zone, company: document.getElementById('ml-co').value,
       landlord: document.getElementById('ml-ll').value.trim(),
       addr: document.getElementById('ml-addr').value.trim(),
       totalArea: +document.getElementById('ml-area').value||0,
       pubArea: +document.getElementById('ml-pub').value||0,
-      rent: +document.getElementById('ml-rent').value||0,
+      rent, startDate: start, endDate: end,
+      tiers: rent ? [{id:nid(), from:start, to:end, rent, freeMonths:[]}] : [],
     });
     closeMod(); ds(); renderAll();
   });
@@ -1142,15 +1435,26 @@ function delEmp(id){
   const e = findEmpById(id);
   showConf(`確定刪除員工「${e?.name}」？`, ()=>{ S.emps = S.emps.filter(e=>e.id!==id); ds(); renderEmp(); renderResult(); });
 }
-function savePeriod(){ S.period = document.getElementById('period-input').value; ds(); document.getElementById('sb-period').textContent = S.period||'未設定'; }
+function savePeriod(){
+  S.period = document.getElementById('period-input').value;
+  document.getElementById('sb-period').textContent = S.period||'未設定';
+  const updated = autoApplyTiers();
+  if(updated > 0){
+    toast('✓ 依費率階段自動更新 '+updated+' 筆租金');
+    renderCost(); renderResult();
+  }
+  ds();
+}
 
 // ═══════════════════════════════════════════════════════
 //  RENDER: COST
 // ═══════════════════════════════════════════════════════
 function renderCost(){
-  const costs = allCosts();
+  const costs = allCosts(); // 費用設定頁顯示原始設定值（不解析）
+  const resolvedCosts = getCurrentResolvedCosts();
   document.getElementById('nb-cost').textContent = costs.length+'項';
-  document.getElementById('cost-total').textContent = fmtMoney(costs.reduce((s,c)=>s+(c.amount||0),0));
+  document.getElementById('cost-total').textContent = fmtMoney(resolvedCosts.reduce((s,c)=>s+(c.amount||0),0))
+    + (S.period ? ' <span style="font-size:10.5px;color:var(--teal)">（'+S.period+'）</span>' : '');
 
   const leaseOpts = '<option value="">不限區域</option>'+(S.leases||[]).map(l=>`<option value="${l.id}">${l.zone}(${l.company})</option>`).join('');
   let html = '';
@@ -1186,8 +1490,16 @@ function renderCost(){
         <td><select style="font-size:12px;width:84px" onchange="updateCostItemZone(${gid},${cid},this.value)">${zoneSelected}</select></td>
         <td><select style="font-size:12px;width:84px;color:${c.hcCompany?'var(--blue)':'var(--text3)'}"
           onchange="updateCostItem(${gid},${cid},'hcCompany',this.value||null)">${coOpts}</select></td>
-        <td style="text-align:right"><input type="number" value="${c.amount||''}" min="0" style="width:112px;text-align:right;font-family:var(--mono)"
-          onchange="updateCostItemNum(${gid},${cid},'amount',this.value)"></td>
+        <td style="text-align:right;min-width:130px">
+          <div style="display:flex;gap:3px;justify-content:flex-end;margin-bottom:3px">
+            <button class="cost-mode-btn${c.costMode==='single'||!c.costMode?' on':''}" onclick="setCostMode(${gid},${cid},'single')" title="單月固定金額">單月</button>
+            <button class="cost-mode-btn${c.costMode==='annual_div12'?' on':''}" onclick="setCostMode(${gid},${cid},'annual_div12')" title="填入年度總額，系統自動÷12計算每月">年度預算</button>
+            <button class="cost-mode-btn${c.costMode==='monthly'?' on':''}" onclick="setCostMode(${gid},${cid},'monthly')" title="逐月輸入">逐月</button>
+          </div>
+          ${c.costMode==='annual_div12'?`<input type="number" value="${c.annualBudget||''}" min="0" style="width:112px;text-align:right;font-family:var(--mono)" placeholder="年度總預算金額" onchange="updateCostItemNum(${gid},${cid},'annualBudget',this.value)"><div style="font-size:10px;color:var(--text3);text-align:right">≈ ${fmtMoney(Math.round((c.annualBudget||0)/12))}/月</div>`:
+           c.costMode==='monthly'?`<button class="btn btn-sm btn-ghost" style="font-size:11px" onclick="openMonthlyAmountsModal(${gid},${cid})">設定 12 個月...</button><div style="font-size:10px;color:var(--text3);text-align:right">合計 ${fmtMoney((c.monthlyAmounts||[]).reduce((s,v)=>s+v,0))}</div>`:
+           `<input type="number" value="${c.amount||''}" min="0" style="width:112px;text-align:right;font-family:var(--mono)" onchange="updateCostItemNum(${gid},${cid},'amount',this.value)">`}
+        </td>
         <td style="text-align:center"><button class="btn btn-del btn-sm" onclick="delCostItem(${gid},${cid})">刪</button></td>
       </tr>`;
     });
@@ -1216,6 +1528,41 @@ function delCostItem(gid, cid){
   const g = (S.costGroups||[]).find(g=>g.id===gid); const c = g?.items?.find(c=>c.id===cid);
   showConf(`確定刪除「${c?.name}」？`, ()=>{ g.items=g.items.filter(c=>c.id!==cid); ds(); renderCost(); renderResult(); });
 }
+function setCostMode(gid, cid, mode){
+  const g=(S.costGroups||[]).find(g=>g.id===gid); const c=g?.items?.find(c=>c.id===cid);
+  if(!c) return;
+  c.costMode = mode;
+  if(mode==='monthly' && !c.monthlyAmounts) c.monthlyAmounts = Array(12).fill(0);
+  if(mode==='annual_div12' && !c.annualBudget) c.annualBudget = (c.amount||0)*12;
+  ds(); renderCost();
+}
+
+function openMonthlyAmountsModal(gid, cid){
+  const g=(S.costGroups||[]).find(g=>g.id===gid); const c=g?.items?.find(c=>c.id===cid);
+  if(!c) return;
+  const MNAMES=['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
+  const ma = c.monthlyAmounts||Array(12).fill(0);
+  showMod(`「${c.name}」逐月金額設定`,`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      ${MNAMES.map((mn,i)=>`<div class="mf"><label>${mn}</label><input type="number" id="ma-${i}" value="${ma[i]||''}" min="0" style="font-family:var(--mono);text-align:right"></div>`).join('')}
+    </div>
+    <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+      <button class="btn btn-sm btn-ghost" onclick="fillAllMonths(${gid},${cid})">填入全年相同金額</button>
+      <input type="number" id="ma-fill-val" placeholder="金額" style="width:120px;font-family:var(--mono)">
+    </div>
+  `,()=>{
+    const g2=(S.costGroups||[]).find(g=>g.id===gid); const c2=g2?.items?.find(c=>c.id===cid);
+    if(!c2) return;
+    c2.monthlyAmounts = Array(12).fill(0).map((_,i)=>+document.getElementById('ma-'+i).value||0);
+    closeMod(); ds(); renderCost(); renderResult();
+  });
+}
+
+function fillAllMonths(gid, cid){
+  const val = +document.getElementById('ma-fill-val').value||0;
+  for(let i=0;i<12;i++) document.getElementById('ma-'+i).value = val;
+}
+
 function openAddCostMod(gid){
   const g = (S.costGroups||[]).find(g=>g.id===gid);
   const leaseOpts = '<option value="">不限區域</option>'+(S.leases||[]).map(l=>`<option value="${l.id}">${l.zone}(${l.company})</option>`).join('');
@@ -1266,7 +1613,7 @@ function openBatchMod(gid){
 // ═══════════════════════════════════════════════════════
 function renderResult(){
   const view = document.getElementById('result-view')?.value||'dept';
-  const costs = allCosts();
+  const costs = getCurrentResolvedCosts(); // 依期間解析正確金額
   const emps = (S.emps||[]).filter(e=>e.active!==false);
   const totalCost = costs.reduce((s,c)=>s+(c.amount||0),0);
   const utiCount = totalManualHC('UTI'), usfCount = totalManualHC('USF'), rgcCount = totalManualHC('RGC');
@@ -1342,7 +1689,7 @@ function renderResultZone(emps,costs){
 //  ANALYSIS
 // ═══════════════════════════════════════════════════════
 function renderAnalysis(){
-  const costs = allCosts();
+  const costs = getCurrentResolvedCosts(); // 依期間解析正確金額
   const emps = (S.emps||[]).filter(e=>e.active!==false);
   const totalCost = costs.reduce((s,c)=>s+(c.amount||0),0);
 
@@ -1441,8 +1788,9 @@ function runValidation(){
   if(noLease.length) issues.push(`${noLease.length} 位員工未綁定租約區域`);
   else if(emps.length>0) ok.push('所有員工均已綁定租約');
 
-  const emptyCosts = allCosts().filter(c=>!c.amount);
-  if(emptyCosts.length) issues.push(`${emptyCosts.length} 個費用項目金額為 0`);
+  const resolvedForValidation = getCurrentResolvedCosts();
+  const emptyCosts = resolvedForValidation.filter(c=>!c.amount);
+  if(emptyCosts.length) issues.push(`${emptyCosts.length} 個費用項目當期金額為 0${S.period?'（'+S.period+'）':''}`);
 
   document.getElementById('validation-list').innerHTML = [
     ...issues.map(msg=>`<div class="val-item"><div class="val-icon err">✗</div><div>${msg}</div></div>`),
@@ -1747,7 +2095,7 @@ function downloadTemplate(){
 }
 function exportExcel(){
   loadSheetJS(()=>{
-    const emps=(S.emps||[]).filter(e=>e.active!==false);const costs=allCosts();
+    const emps=(S.emps||[]).filter(e=>e.active!==false);const costs=getCurrentResolvedCosts();
     const h1=['員編','公司','姓名','部門代碼','部門名稱','區域','長(cm)','寬(cm)','座位坪數','公設坪數','合計分攤坪數','分攤比例',...costs.map(c=>c.name),'個人分攤合計'];
     const rows1=[h1,...emps.map(e=>{const l=getLease(e.leaseId);const aa=allocArea(e),ar=areaRatio(e);const vals=costs.map(c=>+empCostAlloc(c,e).toFixed(2));return[e.empNo,e.company,e.name,e.deptCode,e.deptName,l?l.zone:'',e.len,e.wid,+seatArea(e).toFixed(4),+pubAreaForEmp(e).toFixed(4),+aa.toFixed(4),+ar.toFixed(6),...vals,+vals.reduce((s,v)=>s+v,0).toFixed(2)];})];
     const depts={};emps.forEach(e=>{const k=e.deptCode||'(無)';if(!depts[k])depts[k]={code:k,name:e.deptName||'',emps:[]};depts[k].emps.push(e);});
@@ -1800,12 +2148,125 @@ function go(pg, el){
   document.getElementById('page-'+pg).classList.add('on');
   if(el) el.classList.add('on');
   if(pg==='result') renderResult();
+  if(pg==='annual'){ initAnnualYearSelect(); renderAnnual(); }
   if(pg==='analysis') renderAnalysis();
   if(pg==='validate') runValidation();
   if(pg==='history') renderVersionList();
   if(pg==='cloud') loadGsConfig();
 }
 function goImport(){ go('import', document.getElementById('nav-import')); }
+
+// ═══════════════════════════════════════════════════════
+//  ANNUAL VIEW
+// ═══════════════════════════════════════════════════════
+function initAnnualYearSelect(){
+  const el = document.getElementById('annual-year');
+  if(!el) return;
+  const cur = new Date().getFullYear();
+  el.innerHTML = '';
+  for(let y=cur-1; y<=cur+3; y++){
+    const opt = document.createElement('option');
+    opt.value = y; opt.textContent = y+'年';
+    if(y===cur) opt.selected = true;
+    el.appendChild(opt);
+  }
+}
+
+function renderAnnual(){
+  const year = +document.getElementById('annual-year').value;
+  const view = document.getElementById('annual-view').value;
+  const emps = (S.emps||[]).filter(e=>e.active!==false);
+  const MNAMES = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+
+  document.getElementById('annual-cost-section').style.display = (view==='cost'||view==='both') ? '' : 'none';
+  document.getElementById('annual-dept-section').style.display = (view==='dept'||view==='both') ? '' : 'none';
+
+  // Build per-month cost amounts
+  const costs = allCosts();
+  const monthCostAmounts = Array(12).fill(0).map((_,mi)=>
+    costs.map(c=>getCostAmountForMonth(c, year, mi+1))
+  ); // [month][costIdx]
+
+  // ── Cost table ──
+  if(view==='cost'||view==='both'){
+    const tableEl = document.getElementById('annual-cost-table');
+    const hdr = `<tr><th>費用項目</th>${MNAMES.map(m=>`<th>${m}</th>`).join('')}<th class="total-col">全年合計</th></tr>`;
+    const rows = costs.map((c,ci)=>{
+      const amts = Array(12).fill(0).map((_,mi)=>monthCostAmounts[mi][ci]);
+      const total = amts.reduce((s,v)=>s+v,0);
+      const cells = amts.map((a,mi)=>{
+        const isFree = c.zoneId && (()=>{const l=getLease(c.zoneId);return l&&(l.tiers||[]).some(t=>(t.freeMonths||[]).includes(mi+1)&&(()=>{const d=new Date(year,mi,15);const fr=t.from?new Date(t.from):null;const to=t.to?new Date(t.to+'T23:59:59'):null;return(!fr||d>=fr)&&(!to||d<=to);})());})();
+        return `<td class="${isFree?'free-cell':''}">${a===0&&isFree?'免租':fmtMoney(a)}</td>`;
+      }).join('');
+      return `<tr><td title="${esc(c.name)}"><span style="font-size:12.5px;font-weight:500">${esc(c.name)}</span><br><span style="font-size:10px;color:var(--text3)">${esc((S.costGroups||[]).find(g=>g.items?.some(i=>i.id===c.id))?.name||'')}</span></td>${cells}<td class="total-col">${fmtMoney(total)}</td></tr>`;
+    });
+    const totalRow = `<tr class="tf-row"><td>合計</td>${Array(12).fill(0).map((_,mi)=>monthCostAmounts[mi].reduce((s,v)=>s+v,0)).map(t=>`<td>${fmtMoney(t)}</td>`).join('')}<td class="total-col">${fmtMoney(monthCostAmounts.reduce((s,ma)=>s+ma.reduce((s2,v)=>s2+v,0),0))}</td></tr>`;
+    tableEl.innerHTML = hdr + rows.join('') + totalRow;
+  }
+
+  // ── Dept table ──
+  if(view==='dept'||view==='both'){
+    if(!emps.length){ document.getElementById('annual-dept-table').innerHTML='<tr><td style="padding:20px;text-align:center;color:var(--text3)">請先設定員工座位資料</td></tr>'; return; }
+    const depts={};
+    emps.forEach(e=>{const k=e.deptCode||'(無)';if(!depts[k])depts[k]={code:k,name:e.deptName||'',emps:[]};depts[k].emps.push(e);});
+
+    const tableEl = document.getElementById('annual-dept-table');
+    const hdr = `<tr><th>部門</th>${MNAMES.map(m=>`<th>${m}</th>`).join('')}<th class="total-col">全年合計</th></tr>`;
+
+    const rows = Object.values(depts).sort((a,b)=>a.code.localeCompare(b.code)).map(d=>{
+      const monthTotals = Array(12).fill(0).map((_,mi)=>{
+        const costsForMonth = costs.map((c,ci)=>({...c, amount: monthCostAmounts[mi][ci]}));
+        return d.emps.reduce((s,e)=>s+costsForMonth.reduce((s2,c)=>s2+empCostAlloc(c,e),0),0);
+      });
+      const annual = monthTotals.reduce((s,v)=>s+v,0);
+      return `<tr><td title="${esc(d.code+' '+d.name)}"><span style="font-size:10px;font-family:var(--mono);background:var(--blue-bg);color:var(--blue);padding:1px 5px;border-radius:3px;display:inline-block;margin-bottom:2px">${esc(d.code)}</span><br><span style="font-size:12px">${esc(d.name)}</span></td>${monthTotals.map(t=>`<td>${fmtMoney(t)}</td>`).join('')}<td class="total-col">${fmtMoney(annual)}</td></tr>`;
+    });
+
+    const grandMonths = Array(12).fill(0).map((_,mi)=>{
+      const costsForMonth = costs.map((c,ci)=>({...c,amount:monthCostAmounts[mi][ci]}));
+      return emps.reduce((s,e)=>s+costsForMonth.reduce((s2,c)=>s2+empCostAlloc(c,e),0),0);
+    });
+    const totalRow = `<tr class="tf-row"><td>合計</td>${grandMonths.map(t=>`<td>${fmtMoney(t)}</td>`).join('')}<td class="total-col">${fmtMoney(grandMonths.reduce((s,v)=>s+v,0))}</td></tr>`;
+    tableEl.innerHTML = hdr + rows.join('') + totalRow;
+  }
+}
+
+function exportAnnualExcel(){
+  loadSheetJS(()=>{
+    const year = +document.getElementById('annual-year').value;
+    const emps = (S.emps||[]).filter(e=>e.active!==false);
+    const costs = allCosts();
+    const MNAMES = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+    const monthCostAmounts = Array(12).fill(0).map((_,mi)=>costs.map(c=>getCostAmountForMonth(c, year, mi+1)));
+
+    // Sheet1: 費用走勢
+    const h1 = ['費用項目','群組',...MNAMES,'全年合計'];
+    const r1 = costs.map((c,ci)=>{
+      const grpName = (S.costGroups||[]).find(g=>g.items?.some(i=>i.id===c.id))?.name||'';
+      const amts = Array(12).fill(0).map((_,mi)=>monthCostAmounts[mi][ci]);
+      return [c.name, grpName, ...amts, amts.reduce((s,v)=>s+v,0)];
+    });
+    const total1 = ['合計','', ...Array(12).fill(0).map((_,mi)=>monthCostAmounts[mi].reduce((s,v)=>s+v,0)), monthCostAmounts.reduce((s,ma)=>s+ma.reduce((s2,v)=>s2+v,0),0)];
+
+    // Sheet2: 部門彙總
+    const depts={};
+    emps.forEach(e=>{const k=e.deptCode||'(無)';if(!depts[k])depts[k]={code:k,name:e.deptName||'',emps:[]};depts[k].emps.push(e);});
+    const h2 = ['部門代碼','部門名稱',...MNAMES,'全年合計'];
+    const r2 = Object.values(depts).sort((a,b)=>a.code.localeCompare(b.code)).map(d=>{
+      const monthTotals = Array(12).fill(0).map((_,mi)=>{
+        const cf = costs.map((c,ci)=>({...c,amount:monthCostAmounts[mi][ci]}));
+        return d.emps.reduce((s,e)=>s+cf.reduce((s2,c)=>s2+empCostAlloc(c,e),0),0);
+      });
+      return [d.code, d.name, ...monthTotals, monthTotals.reduce((s,v)=>s+v,0)];
+    });
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([h1,...r1,[total1]]), year+'年_費用走勢');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([h2,...r2]), year+'年_部門彙總');
+    XLSX.writeFile(wb, year+'年費用分攤年度彙總.xlsx');
+    toast('已匯出年度 Excel');
+  });
+}
 
 // ═══════════════════════════════════════════════════════
 //  PRINT
@@ -1852,6 +2313,7 @@ function renderAll(){
   renderEmp();
   renderCost();
   renderResult();
+  initAnnualYearSelect();
 }
 
 load();
