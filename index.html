@@ -1050,7 +1050,7 @@ function leaseExpiryStatus(lease){
   if(days < 0) return {cls:'lease-expiry-urgent', label:'已到期 '+Math.abs(days)+' 天'};
   if(days <= 60) return {cls:'lease-expiry-urgent', label:days+' 天後到期'};
   if(days <= 180) return {cls:'lease-expiry-warn', label:days+' 天後到期'};
-  return {cls:'lease-expiry-ok', label: lease.endDate};
+  return null; // 到期日尚早，不顯示標籤
 }
 
 // ─────────────────────────────────────────────────────
