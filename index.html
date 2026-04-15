@@ -1,0 +1,1862 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>費用分攤管理系統 v2</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+TC:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f0ede8;
+  --surface:#faf9f7;
+  --surface2:#f2efe9;
+  --surface3:#e8e4dc;
+  --border:#ddd9d0;
+  --border2:#c8c3b8;
+  --text:#1c1a16;
+  --text2:#5a5650;
+  --text3:#9a9590;
+  --blue:#1a5fa8;
+  --blue-bg:#e8f0fa;
+  --blue-light:#c8daf5;
+  --teal:#0d6e56;
+  --teal-bg:#e0f2eb;
+  --amber:#7a4a08;
+  --amber-bg:#fdf0d8;
+  --red:#9b2b2b;
+  --red-bg:#fdeaea;
+  --red-border:#f5c0c0;
+  --green:#2e6b10;
+  --green-bg:#eaf3de;
+  --gold:#b8860b;
+  --gold-bg:#fffbec;
+  --radius:6px;
+  --radius-lg:10px;
+  --shadow:0 1px 3px rgba(0,0,0,.07),0 4px 12px rgba(0,0,0,.05);
+  --font:'IBM Plex Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  --mono:'IBM Plex Mono',monospace;
+}
+body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13px;line-height:1.6;min-height:100vh}
+
+/* ── Header ── */
+.hdr{background:var(--surface);border-bottom:1px solid var(--border);padding:0 22px;display:flex;align-items:center;justify-content:space-between;height:50px;position:sticky;top:0;z-index:200;box-shadow:0 1px 5px rgba(0,0,0,.07)}
+.hdr-logo{font-size:14px;font-weight:700;display:flex;align-items:center;gap:9px;letter-spacing:.02em}
+.hdr-icon{width:28px;height:28px;background:var(--blue);border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;font-family:var(--mono)}
+.hdr-version{font-size:10px;background:var(--blue-bg);color:var(--blue);padding:2px 7px;border-radius:10px;font-weight:600;letter-spacing:.04em}
+.hdr-actions{display:flex;gap:6px;align-items:center}
+.save-txt{font-size:11px;color:var(--text3);margin-right:4px}
+
+/* ── Cloud Status Bar ── */
+.cloud-bar{background:var(--surface2);border-bottom:1px solid var(--border);padding:4px 22px;display:flex;align-items:center;gap:10px;font-size:11.5px;color:var(--text2)}
+.cloud-dot{width:7px;height:7px;border-radius:50%;background:var(--text3);flex-shrink:0;transition:background .3s}
+.cloud-dot.connected{background:#22c55e}
+.cloud-dot.syncing{background:var(--amber);animation:pulse .8s infinite}
+.cloud-dot.error{background:var(--red)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.cloud-bar .sep{color:var(--border2);margin:0 2px}
+
+/* ── Layout ── */
+.layout{display:flex;min-height:calc(100vh - 50px)}
+.side{width:196px;background:var(--surface);border-right:1px solid var(--border);padding:12px 7px;flex-shrink:0;position:sticky;top:50px;height:calc(100vh - 50px);overflow-y:auto;display:flex;flex-direction:column;gap:1px}
+.side-lbl{font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;padding:10px 10px 4px;margin-top:4px}
+.side-lbl:first-child{margin-top:0}
+.nav{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:var(--radius);cursor:pointer;color:var(--text2);font-size:12.5px;transition:all .12s;user-select:none;font-weight:500}
+.nav:hover{background:var(--surface2);color:var(--text)}
+.nav.on{background:var(--blue-bg);color:var(--blue);font-weight:600}
+.nav svg{width:14px;height:14px;flex-shrink:0;opacity:.7}
+.nav.on svg{opacity:1}
+.nav-badge{font-size:10px;color:var(--text3);margin-left:auto;background:var(--surface2);padding:1px 6px;border-radius:8px;font-family:var(--mono)}
+.nav.on .nav-badge{background:var(--blue-light);color:var(--blue)}
+.side-footer{margin-top:auto;padding:10px;border-top:1px solid var(--border);font-size:11px;color:var(--text3);line-height:2}
+
+.main{flex:1;padding:20px 24px;min-width:0;max-width:1400px}
+.page{display:none}.page.on{display:block}
+.pg-title{font-size:16px;font-weight:700;color:var(--text);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.pg-title svg{width:18px;height:18px;color:var(--blue)}
+
+/* ── Cards ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:15px 17px;margin-bottom:14px;box-shadow:var(--shadow)}
+.card-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:11px;gap:12px}
+.card-title{font-size:10.5px;font-weight:700;color:var(--text2);letter-spacing:.08em;text-transform:uppercase}
+.notice{background:var(--blue-bg);border:1px solid var(--blue-light);border-radius:var(--radius);padding:8px 12px;font-size:12px;color:#0d3d70;margin-bottom:11px;line-height:1.65}
+.notice.warn{background:var(--amber-bg);border-color:#f0c060;color:var(--amber)}
+.notice.ok{background:var(--green-bg);border-color:#b8dfa0;color:var(--green)}
+.notice.err{background:var(--red-bg);border-color:var(--red-border);color:var(--red)}
+
+/* ── Metrics ── */
+.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.mcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 14px;box-shadow:var(--shadow)}
+.mcard-lbl{font-size:11px;color:var(--text2);margin-bottom:3px}
+.mcard-val{font-size:19px;font-weight:700;letter-spacing:-.02em;line-height:1.2;font-family:var(--mono)}
+.mcard-sub{font-size:10.5px;color:var(--text3);margin-top:2px}
+
+/* ── Buttons ── */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:var(--radius);font-size:12px;cursor:pointer;border:1px solid var(--border2);background:var(--surface);color:var(--text);font-family:inherit;font-weight:500;transition:all .12s;white-space:nowrap}
+.btn:hover{background:var(--surface2)}
+.btn:active{transform:scale(.98)}
+.btn-p{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn-p:hover{filter:brightness(1.08)}
+.btn-sm{padding:3px 9px;font-size:11.5px}
+.btn-del{color:var(--red);border-color:transparent;background:transparent;font-size:11.5px}
+.btn-del:hover{background:var(--red-bg);border-color:var(--red-border)}
+.btn-ghost{border-color:transparent;background:transparent;color:var(--blue)}
+.btn-ghost:hover{background:var(--blue-bg)}
+.btn-teal{background:var(--teal);color:#fff;border-color:var(--teal)}
+.btn-teal:hover{filter:brightness(1.08)}
+.btn-gold{background:var(--gold-bg);color:var(--gold);border-color:#d4a017}
+.btn-gold:hover{background:#fff9e0}
+.grp{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+
+/* ── Forms ── */
+input[type=text],input[type=number],select,textarea{
+  border:1px solid var(--border2);border-radius:var(--radius);padding:5px 8px;
+  font-size:12.5px;background:var(--surface);color:var(--text);font-family:inherit;transition:border-color .12s
+}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 2.5px rgba(26,95,168,.1)}
+input[type=number]{text-align:right}
+
+/* ── Tables ── */
+.tw{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius)}
+table{width:100%;border-collapse:collapse;font-size:12.5px;table-layout:fixed}
+th{font-size:10.5px;font-weight:700;color:var(--text2);text-align:left;padding:6px 10px;border-bottom:1px solid var(--border);background:var(--surface2);white-space:nowrap;letter-spacing:.03em}
+td{padding:5px 10px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:var(--surface2)}
+.tf td{background:var(--surface2);font-weight:600;border-top:1.5px solid var(--border2);font-size:12px}
+.il{border:none;background:transparent;width:100%;font-size:12.5px;padding:0;font-family:inherit;color:var(--text)}
+.il:focus{outline:none;border-bottom:1.5px solid var(--blue)}
+.il-n{text-align:right;font-family:var(--mono)}
+
+/* ── Result ── */
+.rt-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius)}
+.rt-hd,.rt-ft{display:flex;background:var(--surface2)}
+.rt-hd{border-bottom:2px solid var(--border2);border-radius:var(--radius) var(--radius) 0 0;font-size:10.5px;font-weight:700;color:var(--text2);letter-spacing:.03em}
+.rt-ft{border-top:2px solid var(--border2);font-weight:600}
+.rt-row{display:flex;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s}
+.rt-row:last-child{border-bottom:none}
+.rt-row:hover{background:var(--surface2)}
+.rt-row.dept-row{background:var(--surface2)}
+.rc{padding:6px 10px;text-align:right;flex-shrink:0;border-right:1px solid var(--border);font-size:12px;font-family:var(--mono)}
+.rc:last-child{border-right:none}
+.rc.nm{text-align:left;flex:1;min-width:0;display:flex;align-items:center;gap:6px;overflow:hidden;font-family:var(--font)}
+
+/* ── Modal ── */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:999;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
+.modal-bg.on{display:flex}
+.modal{background:var(--surface);border-radius:var(--radius-lg);padding:20px;min-width:320px;max-width:500px;width:94%;box-shadow:0 12px 40px rgba(0,0,0,.18)}
+.modal-title{font-size:14px;font-weight:700;margin-bottom:14px;color:var(--text)}
+.mf{margin-bottom:10px}
+.mf label{display:block;font-size:11px;font-weight:600;color:var(--text2);margin-bottom:3px;letter-spacing:.04em;text-transform:uppercase}
+.mf input,.mf select,.mf textarea{width:100%}
+.modal-actions{display:flex;gap:7px;justify-content:flex-end;margin-top:16px;border-top:1px solid var(--border);padding-top:14px}
+
+/* ── Toast ── */
+.toast{position:fixed;bottom:20px;right:20px;background:#1c1a16;color:#fff;padding:9px 16px;border-radius:var(--radius);font-size:12.5px;z-index:9999;opacity:0;transition:opacity .2s;pointer-events:none;max-width:300px;line-height:1.4}
+.toast.on{opacity:1}
+
+/* ── Drag zone ── */
+.dz{border:2px dashed var(--border2);border-radius:var(--radius-lg);padding:28px;text-align:center;cursor:pointer;transition:all .15s}
+.dz:hover{background:var(--blue-bg);border-color:var(--blue)}
+
+/* ── Tabs ── */
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:12px}
+.tab{padding:6px 15px;font-size:12.5px;cursor:pointer;border:none;border-bottom:2.5px solid transparent;color:var(--text2);background:none;font-family:inherit;font-weight:500;transition:all .12s}
+.tab.on{color:var(--blue);border-bottom-color:var(--blue)}
+.tab:hover:not(.on){color:var(--text)}
+
+/* ── Version Panel ── */
+.version-list{max-height:300px;overflow-y:auto}
+.version-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s;font-size:12.5px}
+.version-item:hover{background:var(--surface2)}
+.version-item:last-child{border-bottom:none}
+.version-tag{font-size:10px;background:var(--blue-bg);color:var(--blue);padding:1px 7px;border-radius:8px;font-weight:600;white-space:nowrap}
+.version-tag.current{background:var(--teal-bg);color:var(--teal)}
+.version-time{font-size:11px;color:var(--text3);font-family:var(--mono)}
+.version-note{flex:1;color:var(--text2)}
+.version-actions{display:flex;gap:4px}
+
+/* ── Validation Panel ── */
+.val-item{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:12.5px;border-bottom:1px solid var(--border)}
+.val-item:last-child{border-bottom:none}
+.val-icon{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0}
+.val-icon.ok{background:var(--green-bg);color:var(--green)}
+.val-icon.warn{background:var(--amber-bg);color:var(--amber)}
+.val-icon.err{background:var(--red-bg);color:var(--red)}
+
+/* ── Google Sheets Setup ── */
+.gs-steps{counter-reset:step}
+.gs-step{display:flex;gap:12px;margin-bottom:12px;align-items:flex-start}
+.gs-step-num{width:22px;height:22px;border-radius:50%;background:var(--blue);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.gs-step-body{flex:1;font-size:12.5px;color:var(--text2);line-height:1.7}
+.gs-step-body strong{color:var(--text)}
+.code-box{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;font-family:var(--mono);font-size:11.5px;word-break:break-all;color:var(--text2);margin:5px 0;position:relative;cursor:pointer}
+.code-box:hover{background:var(--surface3)}
+.code-copy{position:absolute;right:7px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--blue);font-family:var(--font)}
+
+/* ── Analysis ── */
+.bar-wrap{margin-bottom:6px}
+.bar-label{display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:2px}
+.bar-track{background:var(--surface3);border-radius:3px;height:8px;overflow:hidden}
+.bar-fill{height:100%;border-radius:3px;background:var(--blue);transition:width .4s ease}
+.bar-fill.teal{background:var(--teal)}
+.bar-fill.amber{background:#f0a020}
+.bar-fill.red{background:var(--red)}
+
+/* ── Cloud Indicator ── */
+.sync-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:2px 8px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);color:var(--text3)}
+.sync-badge.ok{background:var(--teal-bg);border-color:#b8dfa0;color:var(--teal)}
+.sync-badge.syncing{background:var(--amber-bg);border-color:#f0c060;color:var(--amber)}
+.sync-badge.err{background:var(--red-bg);border-color:var(--red-border);color:var(--red)}
+.sync-badge.off{background:var(--surface2);color:var(--text3)}
+
+@media print{
+  .side,.hdr,.cloud-bar,.btn,.hdr-actions{display:none!important}
+  .main{padding:0}
+  .card{box-shadow:none;border:1px solid #ccc;margin-bottom:10px;break-inside:avoid}
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--text3)}
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="hdr-logo">
+    <div class="hdr-icon">費</div>
+    費用分攤管理系統
+    <span class="hdr-version">v2</span>
+  </div>
+  <div class="hdr-actions">
+    <span class="save-txt" id="save-txt">—</span>
+    <span class="sync-badge off" id="sync-badge">☁ 未連線雲端</span>
+    <button class="btn btn-sm btn-gold" onclick="go('cloud',null)" title="Google Sheets 雲端設定">⚙ 雲端</button>
+    <button class="btn btn-sm" onclick="go('history',null)">📋 版本記錄</button>
+    <button class="btn btn-sm" onclick="exportHTML()">↓ 儲存檔案</button>
+    <button class="btn btn-sm btn-del" onclick="confirmReset()">重置</button>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="side">
+  <div class="side-lbl">設定</div>
+  <div class="nav on" id="nav-lease" onclick="go('lease',this)">
+    <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="1.5"/><path d="M5 7h6M5 10h4"/></svg>
+    租約設定
+    <span class="nav-badge" id="nb-lease">0</span>
+  </div>
+  <div class="nav" id="nav-emp" onclick="go('emp',this)">
+    <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>
+    員工座位
+    <span class="nav-badge" id="nb-emp">0</span>
+  </div>
+  <div class="nav" id="nav-cost" onclick="go('cost',this)">
+    <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5 8h6M8 5v6"/></svg>
+    費用項目
+    <span class="nav-badge" id="nb-cost">0</span>
+  </div>
+  <div class="side-lbl">輸出</div>
+  <div class="nav" id="nav-result" onclick="go('result',this)">
+    <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><path d="M2 12l4-4 3 3 5-6"/></svg>
+    分攤結果
+  </div>
+  <div class="nav" id="nav-analysis" onclick="go('analysis',this)">
+    <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/></svg>
+    成本分析
+  </div>
+  <div class="side-lbl">工具</div>
+  <div class="nav" id="nav-import" onclick="go('import',this)">
+    <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><path d="M8 2v8M5 7l3 3 3-3M3 12h10"/></svg>
+    通訊錄匯入
+  </div>
+  <div class="nav" id="nav-validate" onclick="go('validate',this)">
+    <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><path d="M3 8l3 3 7-7"/></svg>
+    系統檢查
+  </div>
+  <div class="nav" id="nav-cloud" onclick="go('cloud',this)">
+    <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><path d="M4 10a3 3 0 010-6h.5A4 4 0 0112 6.5a2.5 2.5 0 01-.5 5H4z"/></svg>
+    雲端設定
+  </div>
+  <div class="nav" id="nav-history" onclick="go('history',this)">
+    <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2M3 3l2 2"/></svg>
+    版本紀錄
+  </div>
+  <div class="side-footer">
+    分攤期間<br>
+    <span id="sb-period" style="color:var(--text2);font-weight:600">未設定</span>
+  </div>
+</nav>
+
+<main class="main">
+
+<!-- ══ 租約設定 ══ -->
+<div class="page on" id="page-lease">
+  <div class="pg-title">
+    <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 18 18"><rect x="2" y="3" width="14" height="12" rx="2"/><path d="M6 8h6M6 11.5h4"/></svg>
+    租約 / 區域設定
+  </div>
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-title">租約清單</div>
+      <button class="btn btn-p btn-sm" onclick="openLeaseModal()">+ 新增租約</button>
+    </div>
+    <div class="notice">每筆租約對應一個區域（如 4FA、4FB）。設定區域總坪數、公設坪數與月租金後，系統自動計算各員工分攤比例。<br>坪數換算公式：長(cm) × 寬(cm) ÷ <strong>10,000</strong>（→ m²）÷ <strong>3.3058</strong>（→ 坪）。公設坪數依個人座位坪數佔區域座位坪數合計的比例自動分配。</div>
+    <div class="tw">
+      <table style="table-layout:auto;width:100%">
+        <thead><tr>
+          <th style="width:70px">區域代號</th>
+          <th style="width:90px">公司</th>
+          <th style="width:110px">房東</th>
+          <th>地址</th>
+          <th style="width:105px;text-align:right">區域總坪數</th>
+          <th style="width:105px;text-align:right">公設坪數</th>
+          <th style="width:135px;text-align:right">月租金（元）</th>
+          <th style="width:52px;text-align:center">刪</th>
+        </tr></thead>
+        <tbody id="lease-tbody"></tbody>
+        <tfoot><tr class="tf">
+          <td colspan="4">合計</td>
+          <td style="text-align:right;font-family:var(--mono)" id="lease-total-area">—</td>
+          <td></td>
+          <td style="text-align:right;font-family:var(--mono)" id="lease-total-rent">$0</td>
+          <td></td>
+        </tr></tfoot>
+      </table>
+    </div>
+  </div>
+
+  <!-- 人數設定 -->
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-title">部門人數設定（人數比例費用）</div>
+      <div class="grp">
+        <button class="btn btn-sm" onclick="downloadHcTemplate()">↓ 下載範本</button>
+        <button class="btn btn-sm" onclick="document.getElementById('hc-file').click()">↑ 匯入 Excel</button>
+        <input type="file" id="hc-file" accept=".xlsx,.xls" style="display:none" onchange="importHcFile(this)">
+        <button class="btn btn-p btn-sm" onclick="openHcModal()">+ 新增</button>
+      </div>
+    </div>
+    <div class="notice">設定各部門的實際在職人數。人數比例費用（如影印費）以「<strong>部門人數 ÷ 同公司全部門人數合計</strong>」計算分攤比例，再平均分配給部門內每位員工；與員工座位尺寸無關，各公司（UTI / RGC / USF）分母獨立計算不混用。</div>
+    <div class="tw">
+      <table>
+        <thead><tr>
+          <th style="width:80px">公司</th>
+          <th style="width:100px">部門代碼</th>
+          <th style="width:210px">部門名稱</th>
+          <th style="width:105px;text-align:right">在職人數</th>
+          <th style="width:120px;text-align:right">公司內比例</th>
+          <th style="width:52px;text-align:center">刪</th>
+        </tr></thead>
+        <tbody id="hc-tbody"></tbody>
+        <tfoot><tr class="tf">
+          <td colspan="3">合計</td>
+          <td style="text-align:right;font-family:var(--mono)" id="hc-total">0 人</td>
+          <td style="text-align:right">100%</td>
+          <td></td>
+        </tr></tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 員工座位 ══ -->
+<div class="page" id="page-emp">
+  <div class="pg-title">
+    <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 18 18"><circle cx="9" cy="6" r="3.5"/><path d="M2 16c0-3.9 3.1-7 7-7s7 3.1 7 7"/></svg>
+    員工座位資料
+  </div>
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-title">員工清單</div>
+      <div class="grp">
+        <input type="text" id="period-input" placeholder="分攤期間（例：114年1月）" style="width:175px" oninput="savePeriod()">
+        <button class="btn btn-sm" onclick="openAddEmpModal()">+ 新增員工</button>
+        <button class="btn btn-sm btn-p" onclick="goImport()">↑ 通訊錄匯入</button>
+      </div>
+    </div>
+    <div class="notice">每位員工輸入長×寬（cm），系統自動換算坪數（÷ 10,000 ÷ 3.3058，即 1 坪 = 3.3058 m²）。公設坪數依「個人座位坪數 ÷ 同區域所有員工座位坪數合計 × 區域公設坪數」自動分配；合計分攤坪數 = 座位坪數 + 公設坪數。</div>
+    <div class="tabs" id="emp-tabs"></div>
+    <div class="tw">
+      <table>
+        <thead><tr>
+          <th style="width:70px">員編</th>
+          <th style="width:75px">公司</th>
+          <th style="width:90px">姓名</th>
+          <th style="width:80px">部門代碼</th>
+          <th style="width:150px">部門名稱</th>
+          <th style="width:68px;text-align:right">長(cm)</th>
+          <th style="width:68px;text-align:right">寬(cm)</th>
+          <th style="width:85px;text-align:right">座位坪數</th>
+          <th style="width:85px;text-align:right">公設坪數</th>
+          <th style="width:98px;text-align:right">合計分攤坪數</th>
+          <th style="width:82px;text-align:right">分攤比例</th>
+          <th style="width:52px;text-align:center">刪</th>
+        </tr></thead>
+        <tbody id="emp-tbody"></tbody>
+        <tfoot><tr class="tf">
+          <td colspan="7">合計</td>
+          <td style="text-align:right;font-family:var(--mono)" id="emp-total-seat">0</td>
+          <td style="text-align:right;font-family:var(--mono)" id="emp-total-pub">0</td>
+          <td style="text-align:right;font-family:var(--mono)" id="emp-total-alloc">0</td>
+          <td style="text-align:right">100%</td>
+          <td></td>
+        </tr></tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 費用項目 ══ -->
+<div class="page" id="page-cost">
+  <div class="pg-title">
+    <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 18 18"><rect x="2" y="2" width="14" height="14" rx="2.5"/><path d="M6 9h6M9 6v6"/></svg>
+    費用項目設定
+  </div>
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-title">費用群組與項目</div>
+    </div>
+    <div class="notice">
+      <strong>坪數比例</strong>：租金、管理費 → 個人合計分攤坪數（座位＋公設）÷ 區域總坪數。若費用未綁定區域，則以同公司全體員工合計坪數為分母。<br>
+      <strong>人數比例</strong>：影印費等 → 部門人數 ÷ 指定公司全部門人數合計（UTI / RGC / USF 各自獨立計算，不混算）
+    </div>
+    <div class="tw">
+      <table>
+        <thead><tr>
+          <th style="width:165px">費用名稱</th>
+          <th style="width:110px">廠商</th>
+          <th style="width:92px">分攤基準</th>
+          <th style="width:88px">綁定區域</th>
+          <th style="width:88px">適用公司</th>
+          <th style="width:125px;text-align:right">金額（元）</th>
+          <th style="width:52px;text-align:center">刪</th>
+        </tr></thead>
+        <tbody id="cost-tbody"></tbody>
+        <tfoot><tr class="tf">
+          <td>合計</td><td colspan="4"></td>
+          <td style="text-align:right;font-family:var(--mono)" id="cost-total">$0</td>
+          <td></td>
+        </tr></tfoot>
+      </table>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:11px;flex-wrap:wrap;align-items:center">
+      <input type="text" id="nc-grp" placeholder="新費用群組名稱（例：租金）" style="width:200px">
+      <button class="btn btn-p btn-sm" onclick="addCostGroup()">+ 新增群組</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 分攤結果 ══ -->
+<div class="page" id="page-result">
+  <div class="pg-title">
+    <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 18 18"><path d="M2 14l4.5-4.5 3.5 3.5 6-7"/></svg>
+    分攤結果
+  </div>
+  <div class="metrics" id="result-metrics"></div>
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-title">分攤明細</div>
+      <div class="grp">
+        <select id="result-view" onchange="renderResult()" style="font-size:12px">
+          <option value="dept">部門彙總</option>
+          <option value="emp">個人明細</option>
+          <option value="zone">區域彙總</option>
+        </select>
+        <button class="btn btn-sm" onclick="exportExcel()">匯出 Excel</button>
+        <button class="btn btn-sm btn-p" onclick="printPage()">列印 / PDF</button>
+      </div>
+    </div>
+    <div id="result-wrap"></div>
+  </div>
+</div>
+
+<!-- ══ 成本分析 ══ -->
+<div class="page" id="page-analysis">
+  <div class="pg-title">
+    <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 18 18"><circle cx="9" cy="9" r="7"/><path d="M9 5v4l2.5 2.5"/></svg>
+    成本分析
+  </div>
+  <div class="metrics" id="analysis-metrics"></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+    <div class="card">
+      <div class="card-hd"><div class="card-title">部門成本 Top 5</div></div>
+      <div id="analysis-top-dept"></div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div class="card-title">費用項目占比</div></div>
+      <div id="analysis-cost-breakdown"></div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:14px">
+    <div class="card-hd">
+      <div class="card-title">異常偵測</div>
+      <div style="font-size:11px;color:var(--text3)">單項費用超過總費用 <input type="number" id="anom-threshold" value="30" min="5" max="80" style="width:45px;font-size:11px;padding:2px 5px" onchange="renderAnalysis()">% 時警示</div>
+    </div>
+    <div id="analysis-anomalies"></div>
+  </div>
+  <div class="card" style="margin-top:14px" id="analysis-diff-card">
+    <div class="card-hd">
+      <div class="card-title">版本差異比較</div>
+      <div class="grp">
+        <select id="diff-from" style="font-size:12px"></select>
+        <select id="diff-to" style="font-size:12px"></select>
+        <button class="btn btn-sm" onclick="renderDiff()">比較</button>
+      </div>
+    </div>
+    <div id="analysis-diff"></div>
+  </div>
+</div>
+
+<!-- ══ 通訊錄匯入 ══ -->
+<div class="page" id="page-import">
+  <div class="pg-title">
+    <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 18 18"><path d="M9 2v9M5.5 8l3.5 3 3.5-3M3 14h12"/></svg>
+    通訊錄匯入
+  </div>
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-title">上傳員工通訊錄</div>
+      <button class="btn btn-sm" onclick="downloadTemplate()">↓ 下載匯入範本</button>
+    </div>
+    <div class="notice">上傳通訊錄 Excel，系統自動讀取員工資料並與現有資料比對差異（新增 / 保留 / 疑似離職）。在職狀態欄填「在職」者才會匯入，其餘自動略過。<br>必填：<strong>姓名</strong>、<strong>所在區域</strong>。建議填寫：員編、公司、在職狀態、部門代碼、部門名稱、長度cm、寬度cm。</div>
+    <div id="imp-s1">
+      <div class="dz" id="dz" onclick="document.getElementById('imp-file').click()"
+        ondragover="event.preventDefault();this.classList.add('dz-over')"
+        ondragleave="this.classList.remove('dz-over')"
+        ondrop="handleDrop(event)">
+        <div style="font-size:28px;margin-bottom:6px">📂</div>
+        <div style="font-size:13.5px;font-weight:600">點擊上傳或拖放 .xlsx 檔案</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:3px">支援 .xlsx 格式</div>
+      </div>
+      <input type="file" id="imp-file" accept=".xlsx,.xls" style="display:none" onchange="handleImpFile(this)">
+    </div>
+    <div id="imp-s2" style="display:none">
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px">
+        <label style="font-size:12px;color:var(--text2)">工作表：</label>
+        <select id="imp-sheet" style="width:180px" onchange="loadImpSheet()"></select>
+        <span style="font-size:11.5px;color:var(--text3)" id="imp-count"></span>
+      </div>
+      <div class="notice warn" id="imp-map-notice">請確認欄位對應是否正確</div>
+      <div style="overflow-x:auto;max-height:240px;border:1px solid var(--border);border-radius:var(--radius);margin-bottom:12px">
+        <table style="width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap">
+          <thead id="imp-prev-head"></thead>
+          <tbody id="imp-prev-body"></tbody>
+        </table>
+      </div>
+      <div class="grp">
+        <button class="btn" onclick="resetImp()">← 重新上傳</button>
+        <button class="btn btn-p" onclick="runImpDiff()">分析差異 →</button>
+      </div>
+    </div>
+    <div id="imp-s3" style="display:none">
+      <div id="imp-diff-summary" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:12px"></div>
+      <div id="imp-diff-detail" style="max-height:360px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius);margin-bottom:12px"></div>
+      <div class="grp">
+        <button class="btn" onclick="showImpStep(2)">← 返回</button>
+        <button class="btn btn-p" onclick="applyImp()">同步到員工座位</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 系統檢查 ══ -->
+<div class="page" id="page-validate">
+  <div class="pg-title">
+    <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 18 18"><path d="M3 9l4 4 8-8"/></svg>
+    系統檢查
+  </div>
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-title">資料完整性檢查</div>
+      <button class="btn btn-sm btn-p" onclick="runValidation()">重新檢查</button>
+    </div>
+    <div id="validation-list"></div>
+  </div>
+</div>
+
+<!-- ══ 雲端設定 ══ -->
+<div class="page" id="page-cloud">
+  <div class="pg-title">
+    <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 18 18"><path d="M4.5 12a3.5 3.5 0 010-7h.6A4.5 4.5 0 0114 7.5a3 3 0 01-.5 6H4.5z"/></svg>
+    Google Sheets 雲端整合
+  </div>
+  <div class="card">
+    <div class="card-hd"><div class="card-title">連線狀態</div></div>
+    <div id="cloud-status-area">
+      <div class="notice" id="cloud-current-status">尚未設定 Google Sheets 連線。</div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button class="btn btn-p" onclick="syncToSheets()" id="btn-sync-up">☁ 立即同步到雲端</button>
+      <button class="btn" onclick="syncFromSheets()" id="btn-sync-down">↓ 從雲端讀取</button>
+      <button class="btn btn-del" onclick="disconnectSheets()">斷開連線</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hd"><div class="card-title">設定 Google Sheets 連線</div></div>
+    <div class="notice warn">此功能需要建立 Google Apps Script Web App 作為中介層，設定一次後即可使用。</div>
+
+    <div class="gs-steps">
+      <div class="gs-step">
+        <div class="gs-step-num">1</div>
+        <div class="gs-step-body">前往 <a href="https://sheets.google.com" target="_blank" style="color:var(--blue)">Google Sheets</a>，建立一個新的試算表，複製網址中的 <strong>Spreadsheet ID</strong>（位於 /d/ 和 /edit 之間）</div>
+      </div>
+      <div class="gs-step">
+        <div class="gs-step-num">2</div>
+        <div class="gs-step-body">下方點「🔑 產生 Token」，複製產生的 Token 備用</div>
+      </div>
+      <div class="gs-step">
+        <div class="gs-step-num">3</div>
+        <div class="gs-step-body">在試算表中點選 <strong>「擴充功能」→「Apps Script」</strong>，將下方程式碼貼入，並把第 1、2 行的 <code style="background:var(--surface2);padding:1px 4px;border-radius:3px">YOUR_SPREADSHEET_ID_HERE</code> 和 <code style="background:var(--surface2);padding:1px 4px;border-radius:3px">YOUR_SECRET_TOKEN_HERE</code> 換成你的實際值後儲存</div>
+      </div>
+      <div class="gs-step">
+        <div class="gs-step-num">4</div>
+        <div class="gs-step-body">在 Apps Script 中點選 <strong>「部署」→「新增部署」→「Web 應用程式」</strong>，執行身分選「我」，存取權選「任何人」，取得部署網址</div>
+      </div>
+      <div class="gs-step">
+        <div class="gs-step-num">5</div>
+        <div class="gs-step-body">將所有欄位填入下方並點「💾 儲存設定」，再點「🔗 測試連線」確認</div>
+      </div>
+    </div>
+
+    <div style="margin:10px 0 5px;font-size:11.5px;font-weight:600;color:var(--text2)">Apps Script 程式碼（點擊複製）</div>
+    <div class="code-box" onclick="copyGasCode()" style="font-size:10.5px;max-height:200px;overflow-y:auto;white-space:pre;line-height:1.6" id="gas-code-box">
+<span class="code-copy">複製</span>
+const SPREADSHEET_ID = 'YOUR_SPREADSHEET_ID_HERE';
+const SECRET_TOKEN   = 'YOUR_SECRET_TOKEN_HERE';   // ← 與系統設定的 Token 相同
+
+function doPost(e) {
+  try {
+    const payload = JSON.parse(e.postData.contents);
+
+    // ── Token 驗證：token 不符直接拒絕 ──
+    if (payload.token !== SECRET_TOKEN) {
+      return ContentService.createTextOutput(JSON.stringify({ok:false,msg:'Unauthorized'}))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    const { action, data, version } = payload;
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+
+    if (action === 'save') {
+      let sheet = ss.getSheetByName('data') || ss.insertSheet('data');
+      sheet.clearContents();
+      sheet.getRange(1,1).setValue(JSON.stringify(data));
+      let vh = ss.getSheetByName('versions') || ss.insertSheet('versions');
+      const ts = new Date().toISOString();
+      vh.appendRow([ts, version?.note || '自動儲存', JSON.stringify(data)]);
+      return ContentService.createTextOutput(JSON.stringify({ok:true,ts}))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (action === 'load') {
+      let sheet = ss.getSheetByName('data');
+      if (!sheet || sheet.getLastRow() < 1)
+        return ContentService.createTextOutput(JSON.stringify({ok:true,data:null})).setMimeType(ContentService.MimeType.JSON);
+      const raw = sheet.getRange(1,1).getValue();
+      return ContentService.createTextOutput(JSON.stringify({ok:true,data:JSON.parse(raw)}))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (action === 'history') {
+      let vh = ss.getSheetByName('versions');
+      if (!vh)
+        return ContentService.createTextOutput(JSON.stringify({ok:true,versions:[]})).setMimeType(ContentService.MimeType.JSON);
+      const rows = vh.getDataRange().getValues().reverse().slice(0,50);
+      const versions = rows.map(r => ({ts: r[0], note: r[1], data: r[2]}));
+      return ContentService.createTextOutput(JSON.stringify({ok:true,versions}))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    return ContentService.createTextOutput(JSON.stringify({ok:false,msg:'unknown action'}))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch(err) {
+    return ContentService.createTextOutput(JSON.stringify({ok:false,msg:err.toString()}))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function doGet(e) {
+  return ContentService.createTextOutput(JSON.stringify({ok:false,msg:'Use POST'}))
+    .setMimeType(ContentService.MimeType.JSON);
+}</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px">
+      <div class="mf">
+        <label>Spreadsheet ID</label>
+        <input type="text" id="gs-sheet-id" placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms" style="font-family:var(--mono);font-size:11.5px">
+      </div>
+      <div class="mf">
+        <label>Apps Script 部署網址</label>
+        <input type="text" id="gs-url" placeholder="https://script.google.com/macros/s/..." style="font-family:var(--mono);font-size:11.5px">
+      </div>
+    </div>
+    <div class="mf" style="margin-top:6px">
+      <label>存取 Token（防護密鑰）</label>
+      <div style="display:flex;gap:7px;align-items:center">
+        <input type="text" id="gs-token" placeholder="點擊右方按鈕自動產生，或自行輸入" style="font-family:var(--mono);font-size:11.5px;flex:1">
+        <button class="btn btn-sm btn-gold" onclick="generateToken()" title="自動產生隨機 Token">🔑 產生 Token</button>
+        <button class="btn btn-sm" onclick="toggleTokenVis()" id="btn-tok-vis" title="顯示/隱藏 Token">👁</button>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-top:3px">此 Token 需與 Apps Script 第 2 行的 <code style="background:var(--surface2);padding:0 3px;border-radius:2px">SECRET_TOKEN</code> 相同，只存在你的瀏覽器中，不會上傳到 GitHub。</div>
+    </div>
+    <div class="grp" style="margin-top:8px">
+      <button class="btn btn-p" onclick="saveGsConfig()">💾 儲存設定</button>
+      <button class="btn" onclick="testGsConnection()">🔗 測試連線</button>
+    </div>
+    <div id="gs-test-result" style="margin-top:8px"></div>
+  </div>
+</div>
+
+<!-- ══ 版本紀錄 ══ -->
+<div class="page" id="page-history">
+  <div class="pg-title">
+    <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 18 18"><circle cx="9" cy="9" r="7"/><path d="M9 5v4l2.5 2.5"/></svg>
+    版本紀錄
+  </div>
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-title">手動存版本</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <input type="text" id="version-note" placeholder="版本說明（例：114年1月最終版）" style="width:300px">
+      <button class="btn btn-p btn-sm" onclick="saveVersion()">📌 儲存此版本</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-title">本機版本（最近 20 筆）</div>
+      <button class="btn btn-sm" onclick="loadCloudHistory()" id="btn-load-history">☁ 載入雲端版本</button>
+    </div>
+    <div class="version-list" id="version-list"></div>
+  </div>
+</div>
+
+</main>
+</div>
+
+<!-- Modal -->
+<div class="modal-bg" id="mbg" onclick="if(event.target===this)closeMod()">
+  <div class="modal">
+    <div class="modal-title" id="m-title"></div>
+    <div id="m-body"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeMod()">取消</button>
+      <button class="btn btn-p" id="m-ok">確認</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  ID GENERATOR
+// ═══════════════════════════════════════════════════════
+let _uid = 500;
+const nid = () => ++_uid;
+
+// ═══════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════
+let S = { period:'', leases:[], emps:[], costGroups:[], headcounts:[] };
+
+const DS = {
+  period:'',
+  headcounts:[
+    {id:901,company:'UTI',deptCode:'',deptName:'（UTI 合計）',count:0},
+    {id:902,company:'RGC',deptCode:'',deptName:'（RGC 合計）',count:0},
+    {id:903,company:'USF',deptCode:'',deptName:'（USF 合計）',count:0},
+  ],
+  leases:[
+    {id:1,zone:'4FA',company:'UTI',landlord:'大眾電腦',addr:'陽光街300號4樓',totalArea:366.02,pubArea:256.79,rent:390889.61},
+    {id:2,zone:'4FB',company:'UTI',landlord:'大眾電腦',addr:'陽光街296號4樓',totalArea:384.83,pubArea:213.14,rent:410977.68},
+    {id:3,zone:'4FC',company:'UTI',landlord:'大眾電腦',addr:'陽光街298號4樓',totalArea:52.14,pubArea:27.99,rent:55682.71},
+    {id:4,zone:'4FC',company:'RGC',landlord:'大眾電腦',addr:'陽光街298號',totalArea:77.54,pubArea:61.80,rent:82931},
+    {id:5,zone:'6FB',company:'UTI',landlord:'新光人壽',addr:'陽光街300號6樓',totalArea:368.63,pubArea:240.75,rent:406267},
+    {id:6,zone:'B1F',company:'UTI',landlord:'大眾電腦',addr:'陽光街300號B1',totalArea:60.72,pubArea:0,rent:64964},
+  ],
+  emps:[],
+  costGroups:[
+    {id:201,name:'租金',open:true,items:[
+      {id:101,name:'4FA區租金（大眾電腦）',vendor:'大眾電腦',basis:'area',zoneId:1,hcCompany:null,amount:390889.61},
+      {id:102,name:'4FB區租金（大眾電腦）',vendor:'大眾電腦',basis:'area',zoneId:2,hcCompany:null,amount:410977.68},
+      {id:103,name:'4FC區租金-UTI',vendor:'大眾電腦',basis:'area',zoneId:3,hcCompany:null,amount:55682.71},
+      {id:104,name:'4FC區租金-RGC',vendor:'大眾電腦',basis:'area',zoneId:4,hcCompany:null,amount:82931},
+      {id:105,name:'6FB區租金（新光人壽）',vendor:'新光人壽',basis:'area',zoneId:5,hcCompany:null,amount:406267},
+      {id:106,name:'B1F區租金',vendor:'大眾電腦',basis:'area',zoneId:6,hcCompany:null,amount:64964},
+    ]},
+    {id:202,name:'管理費',open:true,items:[
+      {id:107,name:'4FA區管理費',vendor:'大眾電腦',basis:'area',zoneId:1,hcCompany:null,amount:0},
+      {id:108,name:'4FB區管理費',vendor:'大眾電腦',basis:'area',zoneId:2,hcCompany:null,amount:0},
+      {id:109,name:'6FB區管理費',vendor:'新光人壽',basis:'area',zoneId:5,hcCompany:null,amount:0},
+    ]},
+    {id:203,name:'影印費',open:true,items:[
+      {id:110,name:'影印月租費',vendor:'',basis:'headcount',zoneId:null,hcCompany:null,amount:0},
+      {id:111,name:'A4紙張',vendor:'',basis:'headcount',zoneId:null,hcCompany:null,amount:0},
+      {id:112,name:'A3紙張',vendor:'',basis:'headcount',zoneId:null,hcCompany:null,amount:0},
+    ]},
+  ]
+};
+
+const COMPANIES = ['UTI','RGC','USF'];
+
+// ═══════════════════════════════════════════════════════
+//  PERSIST (localStorage with safety)
+// ═══════════════════════════════════════════════════════
+function load(){
+  try{
+    const r = localStorage.getItem('alloc_v4');
+    if(r){ S = JSON.parse(r); _uid = 2000; if(!S.headcounts) S.headcounts = JSON.parse(JSON.stringify(DS.headcounts)); }
+    else S = JSON.parse(JSON.stringify(DS));
+  } catch(e){ S = JSON.parse(JSON.stringify(DS)); }
+}
+
+function save(){
+  try{
+    const json = JSON.stringify(S);
+    localStorage.setItem('alloc_v4', json);
+    const el = document.getElementById('save-txt');
+    el.textContent = '✓ ' + new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'}) + ' 已儲存';
+    // Auto-sync if configured
+    if(GS.url && GS.autoSync) syncToSheets(true);
+  } catch(e){
+    toast('⚠ 本機儲存失敗（空間不足？）請點「儲存檔案」備份');
+  }
+}
+let _st;
+const ds = () => { clearTimeout(_st); _st = setTimeout(save, 600); };
+
+// ═══════════════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════════════
+const esc = s => String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt = n => Math.round(n||0).toLocaleString('zh-TW');
+const fmt4 = n => parseFloat(n||0).toFixed(2);
+const fmtPct = n => ((n||0)*100).toFixed(4)+'%';
+const allCosts = () => (S.costGroups||[]).flatMap(g => g.items||[]);
+const fmtMoney = n => '$' + fmt(n);
+
+function getLease(id){ return (S.leases||[]).find(l => l.id === id) || null; }
+function findEmpById(id){ return (S.emps||[]).find(e => e.id === id) || null; }
+
+// Seat area: L×W cm / 10000 × 0.3025 (m² to 坪)
+function seatArea(e){ return (e.len||0)*(e.wid||0)/10000*0.3025; }
+
+function pubAreaForEmp(e){
+  const lease = getLease(e.leaseId);
+  if(!lease) return 0;
+  const zoneSeat = (S.emps||[]).filter(x => x.leaseId === e.leaseId && x.active !== false)
+    .reduce((s,x) => s+seatArea(x), 0);
+  if(!zoneSeat) return 0;
+  return seatArea(e)/zoneSeat*(lease.pubArea||0);
+}
+
+function allocArea(e){ return seatArea(e)+pubAreaForEmp(e); }
+
+function areaRatio(e){
+  const lease = getLease(e.leaseId);
+  if(!lease||!lease.totalArea) return 0;
+  return allocArea(e)/lease.totalArea;
+}
+
+function totalManualHC(company){
+  return (S.headcounts||[]).filter(h => !company || h.company === company).reduce((s,h) => s+(h.count||0), 0);
+}
+function deptManualHC(deptCode, company){
+  const h = (S.headcounts||[]).find(h => h.deptCode === deptCode && (!company || h.company === company));
+  return h ? h.count||0 : 0;
+}
+
+function empCostAlloc(cost, emp){
+  if(cost.basis === 'area'){
+    if(cost.hcCompany && emp.company !== cost.hcCompany) return 0;
+    if(cost.zoneId && emp.leaseId !== cost.zoneId) return 0;
+    if(!cost.zoneId){
+      const coFilter = cost.hcCompany;
+      const totalSeat = (S.emps||[])
+        .filter(e => e.active !== false && (!coFilter || e.company === coFilter))
+        .reduce((s,e2) => s+allocArea(e2), 0);
+      return totalSeat ? cost.amount*allocArea(emp)/totalSeat : 0;
+    }
+    const coFilter = cost.hcCompany;
+    if(coFilter){
+      const zoneTotalArea = getLease(cost.zoneId)?.totalArea || 0;
+      if(!zoneTotalArea) return 0;
+      return cost.amount * allocArea(emp) / zoneTotalArea;
+    }
+    return cost.amount * areaRatio(emp);
+  } else {
+    const co = cost.hcCompany || emp.company || 'UTI';
+    if(cost.hcCompany && emp.company !== cost.hcCompany) return 0;
+    const coTotal = totalManualHC(co);
+    if(!coTotal) return 0;
+    const deptHC = deptManualHC(emp.deptCode, co);
+    const empInDept = (S.emps||[]).filter(e => e.deptCode === emp.deptCode && e.company === co && e.active !== false).length || 1;
+    return cost.amount * deptHC / coTotal / empInDept;
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  RENDER: LEASE
+// ═══════════════════════════════════════════════════════
+function renderLease(){
+  const leases = S.leases||[];
+  document.getElementById('nb-lease').textContent = leases.length;
+  const totalRent = leases.reduce((s,l) => s+(l.rent||0), 0);
+  document.getElementById('lease-total-rent').textContent = fmtMoney(totalRent);
+  document.getElementById('lease-total-area').textContent = fmt4(leases.reduce((s,l) => s+(l.totalArea||0), 0))+' 坪';
+
+  document.getElementById('lease-tbody').innerHTML = leases.map((l) => {
+    const lid = l.id;
+    return `<tr>
+      <td><input class="il" value="${esc(l.zone)}" onchange="updateLease(${lid},'zone',this.value)"></td>
+      <td><input class="il" value="${esc(l.company)}" onchange="updateLease(${lid},'company',this.value)"></td>
+      <td><input class="il" value="${esc(l.landlord)}" onchange="updateLease(${lid},'landlord',this.value)"></td>
+      <td><input class="il" value="${esc(l.addr)}" style="width:100%" onchange="updateLease(${lid},'addr',this.value)"></td>
+      <td><input class="il il-n" type="number" value="${l.totalArea||''}" step="0.01" onchange="updateLeaseNum(${lid},'totalArea',this.value)"></td>
+      <td><input class="il il-n" type="number" value="${l.pubArea||''}" step="0.01" onchange="updateLeaseNum(${lid},'pubArea',this.value)"></td>
+      <td><input class="il il-n" value="${l.rent ? fmt(l.rent) : ''}" style="text-align:right;font-family:var(--mono)"
+        onfocus="this.value=this.value.replace(/,/g,'')"
+        onblur="const v=+this.value.replace(/,/g,'')||0;updateLeaseNum(${lid},'rent',v);this.value=v?fmt(v):''"></td>
+      <td style="text-align:center"><button class="btn btn-del btn-sm" onclick="delLease(${lid})">刪</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function updateLease(id, key, val){ const l = getLease(id); if(l){ l[key]=val; ds(); if(key==='zone') renderAll(); } }
+function updateLeaseNum(id, key, val){ const l = getLease(id); if(l){ l[key]=+String(val).replace(/,/g,'')||0; ds(); renderAll(); } }
+
+function openLeaseModal(){
+  showMod('新增租約',`
+    <div class="mf"><label>區域代號（如 4FA）</label><input type="text" id="ml-zone" autofocus></div>
+    <div class="mf"><label>公司</label>
+      <select id="ml-co">${COMPANIES.map(c=>`<option value="${c}">${c}</option>`).join('')}</select>
+    </div>
+    <div class="mf"><label>房東</label><input type="text" id="ml-ll"></div>
+    <div class="mf"><label>地址</label><input type="text" id="ml-addr"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="mf"><label>區域總坪數</label><input type="number" id="ml-area" step="0.01"></div>
+      <div class="mf"><label>公設坪數（固定值）</label><input type="number" id="ml-pub" step="0.01"></div>
+    </div>
+    <div class="mf"><label>月租金（元）</label><input type="number" id="ml-rent"></div>
+  `,()=>{
+    const zone = document.getElementById('ml-zone').value.trim();
+    if(!zone){ toast('請輸入區域代號'); return; }
+    S.leases.push({
+      id: nid(), zone, company: document.getElementById('ml-co').value,
+      landlord: document.getElementById('ml-ll').value.trim(),
+      addr: document.getElementById('ml-addr').value.trim(),
+      totalArea: +document.getElementById('ml-area').value||0,
+      pubArea: +document.getElementById('ml-pub').value||0,
+      rent: +document.getElementById('ml-rent').value||0,
+    });
+    closeMod(); ds(); renderAll();
+  });
+}
+function delLease(id){
+  const l = getLease(id);
+  showConf(`確定刪除租約「${l?.zone}」？此操作將移除關聯資料。`, ()=>{
+    S.leases = S.leases.filter(l => l.id !== id);
+    ds(); renderAll();
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+//  RENDER: HEADCOUNT
+// ═══════════════════════════════════════════════════════
+function renderHc(){
+  const hcs = S.headcounts||[];
+  const coTotals = COMPANIES.map(co => ({co, total: totalManualHC(co)}));
+  const grandTotal = coTotals.reduce((s,x) => s+x.total, 0);
+  document.getElementById('hc-total').textContent =
+    grandTotal+' 人（'+coTotals.filter(x=>x.total>0).map(x=>`${x.co}:${x.total}`).join('、')+'）';
+
+  document.getElementById('hc-tbody').innerHTML = hcs.map((h) => {
+    const hid = h.id;
+    const coTotal = totalManualHC(h.company);
+    const pct = coTotal ? (h.count||0)/coTotal*100 : 0;
+    const coColor = {'UTI':'var(--blue)','RGC':'var(--teal)','USF':'var(--amber)'}[h.company]||'var(--text2)';
+    return `<tr>
+      <td>
+        <select style="font-size:12px;border:none;background:transparent;color:${coColor};font-weight:600"
+          onchange="updateHc(${hid},'company',this.value)">
+          ${COMPANIES.map(c=>`<option value="${c}"${h.company===c?' selected':''}>${c}</option>`).join('')}
+        </select>
+      </td>
+      <td><input class="il" value="${esc(h.deptCode||'')}" style="font-family:var(--mono)" onchange="updateHc(${hid},'deptCode',this.value)"></td>
+      <td><input class="il" value="${esc(h.deptName||'')}" onchange="updateHc(${hid},'deptName',this.value)"></td>
+      <td><input class="il il-n" type="number" value="${h.count||''}" min="0" step="1" onchange="updateHcNum(${hid},'count',this.value)"></td>
+      <td style="text-align:right;font-size:11.5px;color:var(--text2)">${coTotal?pct.toFixed(2)+'%（'+h.company+'內）':'—'}</td>
+      <td style="text-align:center"><button class="btn btn-del btn-sm" onclick="delHc(${hid})">刪</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function updateHc(id, key, val){ const h = (S.headcounts||[]).find(h=>h.id===id); if(h){ h[key]=val; ds(); renderHc(); renderResult(); } }
+function updateHcNum(id, key, val){ const h = (S.headcounts||[]).find(h=>h.id===id); if(h){ h[key]=+val||0; ds(); renderHc(); renderResult(); } }
+
+function openHcModal(){
+  showMod('新增部門人數',`
+    <div class="mf"><label>公司</label>
+      <select id="hm-co">${COMPANIES.map(c=>`<option value="${c}">${c}</option>`).join('')}</select>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="mf"><label>部門代碼</label><input type="text" id="hm-dc" placeholder="例：PA40" style="font-family:var(--mono)" autofocus></div>
+      <div class="mf"><label>在職人數</label><input type="number" id="hm-cnt" min="0" step="1" placeholder="0"></div>
+    </div>
+    <div class="mf"><label>部門名稱</label><input type="text" id="hm-dn" placeholder="例：VAS美洲事業部"></div>
+  `,()=>{
+    const dn = document.getElementById('hm-dn').value.trim();
+    if(!dn){ toast('請輸入部門名稱'); return; }
+    S.headcounts = S.headcounts||[];
+    S.headcounts.push({ id:nid(), company:document.getElementById('hm-co').value,
+      deptCode:document.getElementById('hm-dc').value.trim(),
+      deptName:dn, count:+document.getElementById('hm-cnt').value||0 });
+    closeMod(); ds(); renderHc(); renderResult();
+  });
+}
+function delHc(id){
+  const h = (S.headcounts||[]).find(h=>h.id===id);
+  showConf(`確定刪除「${h?.deptName}」人數設定？`,()=>{
+    S.headcounts = S.headcounts.filter(h=>h.id!==id); ds(); renderHc(); renderResult();
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+//  RENDER: EMP
+// ═══════════════════════════════════════════════════════
+let _empZoneFilter = null;
+
+function renderEmp(){
+  const emps = S.emps||[];
+  document.getElementById('nb-emp').textContent = emps.length+'人';
+  document.getElementById('period-input').value = S.period||'';
+  document.getElementById('sb-period').textContent = S.period||'未設定';
+
+  const zones = [...new Set((S.leases||[]).map(l=>l.zone))];
+  const tabsEl = document.getElementById('emp-tabs');
+  tabsEl.innerHTML = `
+    <button class="tab${_empZoneFilter===null?' on':''}" onclick="setEmpZone(null)">全部（${emps.length}）</button>
+    ${zones.map(z=>{
+      const cnt = emps.filter(e=>{const l=getLease(e.leaseId);return l&&l.zone===z;}).length;
+      return `<button class="tab${_empZoneFilter===z?' on':''}" onclick="setEmpZone('${z}')">${z}（${cnt}）</button>`;
+    }).join('')}
+    <button class="tab" onclick="openAddZoneTabModal()" style="color:var(--blue);font-size:11.5px;opacity:.7">＋ 區域</button>
+  `;
+
+  const filtered = _empZoneFilter
+    ? emps.filter(e=>{const l=getLease(e.leaseId);return l&&l.zone===_empZoneFilter;})
+    : emps;
+
+  document.getElementById('emp-total-seat').textContent = fmt4(filtered.reduce((s,e)=>s+seatArea(e),0))+' 坪';
+  document.getElementById('emp-total-pub').textContent = fmt4(filtered.reduce((s,e)=>s+pubAreaForEmp(e),0))+' 坪';
+  document.getElementById('emp-total-alloc').textContent = fmt4(filtered.reduce((s,e)=>s+allocArea(e),0))+' 坪';
+
+  const leaseOpts = (S.leases||[]).map(l=>`<option value="${l.id}">${l.zone}(${l.company})</option>`).join('');
+
+  document.getElementById('emp-tbody').innerHTML = filtered.map((e) => {
+    const eid = e.id;
+    const sa = seatArea(e), pa = pubAreaForEmp(e), aa = allocArea(e), ar = areaRatio(e);
+    return `<tr>
+      <td><input class="il" value="${esc(e.empNo)}" onchange="updateEmp(${eid},'empNo',this.value)"></td>
+      <td><input class="il" value="${esc(e.company)}" style="width:60px" onchange="updateEmp(${eid},'company',this.value)"></td>
+      <td><input class="il" value="${esc(e.name)}" onchange="updateEmp(${eid},'name',this.value)"></td>
+      <td><input class="il" value="${esc(e.deptCode)}" style="font-family:var(--mono)" onchange="updateEmp(${eid},'deptCode',this.value)"></td>
+      <td><input class="il" value="${esc(e.deptName)}" onchange="updateEmp(${eid},'deptName',this.value)"></td>
+      <td><input class="il il-n" type="number" value="${e.len||''}" step="1" onchange="updateEmpNum(${eid},'len',this.value)"></td>
+      <td><input class="il il-n" type="number" value="${e.wid||''}" step="1" onchange="updateEmpNum(${eid},'wid',this.value)"></td>
+      <td style="text-align:right;color:var(--text2);font-family:var(--mono)">${fmt4(sa)}</td>
+      <td style="text-align:right;color:var(--text2);font-family:var(--mono)">${fmt4(pa)}</td>
+      <td style="text-align:right;font-weight:600;font-family:var(--mono)">${fmt4(aa)}</td>
+      <td style="text-align:right;font-size:11.5px;color:var(--text2);font-family:var(--mono)">${fmtPct(ar)}</td>
+      <td style="text-align:center"><button class="btn btn-del btn-sm" onclick="delEmp(${eid})">刪</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function updateEmp(id, key, val){ const e = findEmpById(id); if(e){ e[key]=val; ds(); renderResult(); } }
+function updateEmpNum(id, key, val){ const e = findEmpById(id); if(e){ e[key]=+val||0; ds(); renderEmp(); renderResult(); } }
+
+function setEmpZone(v){ _empZoneFilter = (v===null||v==='null') ? null : v; renderEmp(); }
+
+function openAddZoneTabModal(){
+  showMod('新增區域分頁',`
+    <div class="mf"><label>區域代號（如 4FA）</label><input type="text" id="zt-zone" autofocus placeholder="例：4FA"></div>
+    <div class="mf"><label>公司</label>
+      <select id="zt-co">${COMPANIES.map(c=>`<option value="${c}">${c}</option>`).join('')}</select>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="mf"><label>區域總坪數（選填）</label><input type="number" id="zt-area" step="0.01" min="0"></div>
+      <div class="mf"><label>公設坪數（選填）</label><input type="number" id="zt-pub" step="0.01" min="0"></div>
+    </div>
+    <div class="mf"><label>月租金（選填）</label><input type="number" id="zt-rent" min="0"></div>
+  `,()=>{
+    const zone = document.getElementById('zt-zone').value.trim();
+    if(!zone){ toast('請輸入區域代號'); return; }
+    const co = document.getElementById('zt-co').value;
+    if((S.leases||[]).find(l=>l.zone===zone&&l.company===co)){ toast(`區域 ${zone} 已存在`); return; }
+    S.leases = S.leases||[];
+    S.leases.push({ id:nid(), zone, company:co, landlord:'', addr:'',
+      totalArea:+document.getElementById('zt-area').value||0,
+      pubArea:+document.getElementById('zt-pub').value||0,
+      rent:+document.getElementById('zt-rent').value||0 });
+    _empZoneFilter = zone;
+    closeMod(); ds(); renderAll(); toast(`已新增區域「${zone}」`);
+  });
+}
+
+function openAddEmpModal(){
+  const leaseOpts = (S.leases||[]).map(l=>`<option value="${l.id}">${l.zone}(${l.company})</option>`).join('');
+  showMod('新增員工',`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="mf"><label>員編</label><input type="text" id="ae-no" autofocus></div>
+      <div class="mf"><label>公司</label><input type="text" id="ae-co" value="UTI"></div>
+      <div class="mf"><label>姓名</label><input type="text" id="ae-name"></div>
+      <div class="mf"><label>所在租約/區域</label><select id="ae-lease">${leaseOpts}</select></div>
+      <div class="mf"><label>部門代碼</label><input type="text" id="ae-dc" style="font-family:var(--mono)"></div>
+      <div class="mf"><label>部門名稱</label><input type="text" id="ae-dn"></div>
+      <div class="mf"><label>長度 (cm)</label><input type="number" id="ae-len" step="1"></div>
+      <div class="mf"><label>寬度 (cm)</label><input type="number" id="ae-wid" step="1"></div>
+    </div>
+  `,()=>{
+    const name = document.getElementById('ae-name').value.trim();
+    if(!name){ toast('請輸入姓名'); return; }
+    S.emps.push({
+      id: nid(), empNo: document.getElementById('ae-no').value.trim(),
+      company: document.getElementById('ae-co').value.trim()||'UTI',
+      name, leaseId: +document.getElementById('ae-lease').value,
+      deptCode: document.getElementById('ae-dc').value.trim(),
+      deptName: document.getElementById('ae-dn').value.trim(),
+      len: +document.getElementById('ae-len').value||0,
+      wid: +document.getElementById('ae-wid').value||0, active: true
+    });
+    closeMod(); ds(); renderEmp(); renderResult();
+  });
+}
+function delEmp(id){
+  const e = findEmpById(id);
+  showConf(`確定刪除員工「${e?.name}」？`, ()=>{ S.emps = S.emps.filter(e=>e.id!==id); ds(); renderEmp(); renderResult(); });
+}
+function savePeriod(){ S.period = document.getElementById('period-input').value; ds(); document.getElementById('sb-period').textContent = S.period||'未設定'; }
+
+// ═══════════════════════════════════════════════════════
+//  RENDER: COST
+// ═══════════════════════════════════════════════════════
+function renderCost(){
+  const costs = allCosts();
+  document.getElementById('nb-cost').textContent = costs.length+'項';
+  document.getElementById('cost-total').textContent = fmtMoney(costs.reduce((s,c)=>s+(c.amount||0),0));
+
+  const leaseOpts = '<option value="">不限區域</option>'+(S.leases||[]).map(l=>`<option value="${l.id}">${l.zone}(${l.company})</option>`).join('');
+  let html = '';
+  (S.costGroups||[]).forEach((g) => {
+    const gid = g.id;
+    const gAmt = (g.items||[]).reduce((s,c)=>s+(c.amount||0),0);
+    const open = g.open !== false;
+    html += `<tr style="background:var(--surface2)">
+      <td colspan="7" style="padding:5px 10px">
+        <div style="display:flex;align-items:center;gap:7px">
+          <span style="cursor:pointer;font-size:11px;color:var(--text3);user-select:none" onclick="toggleCostGrp(${gid})">${open?'▼':'▶'}</span>
+          <input class="il" value="${esc(g.name)}" style="font-weight:600;font-size:13px" onchange="updateCostGrp(${gid},'name',this.value)">
+          <span style="font-size:11px;color:var(--text3);margin-left:auto;font-family:var(--mono)">小計 ${fmtMoney(gAmt)}</span>
+          <button class="btn btn-sm btn-ghost" onclick="openAddCostMod(${gid})">+ 新增</button>
+          <button class="btn btn-sm btn-ghost" onclick="openBatchMod(${gid})" style="color:var(--teal)">⚡ 批量</button>
+          <button class="btn btn-sm btn-del" onclick="delCostGrp(${gid})">刪群組</button>
+        </div>
+      </td>
+    </tr>`;
+    if(open)(g.items||[]).forEach((c) => {
+      const cid = c.id;
+      const coOpts = `<option value="">全部</option>${COMPANIES.map(co=>`<option value="${co}"${c.hcCompany===co?' selected':''}>${co}</option>`).join('')}`;
+      const zoneSelected = leaseOpts.replace(`value="${c.zoneId||''}"`,`value="${c.zoneId||''}" selected`);
+      html += `<tr>
+        <td style="padding-left:22px"><input class="il" value="${esc(c.name)}" style="width:148px" onchange="updateCostItem(${gid},${cid},'name',this.value)"></td>
+        <td><input class="il" value="${esc(c.vendor||'')}" placeholder="廠商" style="width:98px;color:var(--text2)" onchange="updateCostItem(${gid},${cid},'vendor',this.value)"></td>
+        <td>
+          <select style="font-size:12px;width:87px" onchange="updateCostItem(${gid},${cid},'basis',this.value)">
+            <option value="area"${c.basis==='area'?' selected':''}>坪數比例</option>
+            <option value="headcount"${c.basis==='headcount'?' selected':''}>人數比例</option>
+          </select>
+        </td>
+        <td><select style="font-size:12px;width:84px" onchange="updateCostItemZone(${gid},${cid},this.value)">${zoneSelected}</select></td>
+        <td><select style="font-size:12px;width:84px;color:${c.hcCompany?'var(--blue)':'var(--text3)'}"
+          onchange="updateCostItem(${gid},${cid},'hcCompany',this.value||null)">${coOpts}</select></td>
+        <td style="text-align:right"><input type="number" value="${c.amount||''}" min="0" style="width:112px;text-align:right;font-family:var(--mono)"
+          onchange="updateCostItemNum(${gid},${cid},'amount',this.value)"></td>
+        <td style="text-align:center"><button class="btn btn-del btn-sm" onclick="delCostItem(${gid},${cid})">刪</button></td>
+      </tr>`;
+    });
+  });
+  document.getElementById('cost-tbody').innerHTML = html;
+}
+
+function updateCostGrp(gid, key, val){ const g=(S.costGroups||[]).find(g=>g.id===gid); if(g){g[key]=val;ds();} }
+function toggleCostGrp(gid){ const g=(S.costGroups||[]).find(g=>g.id===gid); if(g){g.open=!g.open;ds();renderCost();} }
+function updateCostItem(gid, cid, key, val){ const g=(S.costGroups||[]).find(g=>g.id===gid); const c=g?.items?.find(c=>c.id===cid); if(c){c[key]=val;ds();renderCost();renderResult();} }
+function updateCostItemNum(gid, cid, key, val){ const g=(S.costGroups||[]).find(g=>g.id===gid); const c=g?.items?.find(c=>c.id===cid); if(c){c[key]=+val||0;ds();renderCost();renderResult();} }
+function updateCostItemZone(gid, cid, val){ updateCostItem(gid,cid,'zoneId',val?+val:null); }
+
+function addCostGroup(){
+  const n = document.getElementById('nc-grp').value.trim();
+  if(!n){ toast('請輸入群組名稱'); return; }
+  S.costGroups.push({id:nid(),name:n,open:true,items:[]});
+  document.getElementById('nc-grp').value = '';
+  ds(); renderCost();
+}
+function delCostGrp(gid){
+  const g = (S.costGroups||[]).find(g=>g.id===gid);
+  showConf(`確定刪除群組「${g?.name}」及所有費用？`, ()=>{ S.costGroups=S.costGroups.filter(g=>g.id!==gid); ds(); renderCost(); renderResult(); });
+}
+function delCostItem(gid, cid){
+  const g = (S.costGroups||[]).find(g=>g.id===gid); const c = g?.items?.find(c=>c.id===cid);
+  showConf(`確定刪除「${c?.name}」？`, ()=>{ g.items=g.items.filter(c=>c.id!==cid); ds(); renderCost(); renderResult(); });
+}
+function openAddCostMod(gid){
+  const g = (S.costGroups||[]).find(g=>g.id===gid);
+  const leaseOpts = '<option value="">不限區域</option>'+(S.leases||[]).map(l=>`<option value="${l.id}">${l.zone}(${l.company})</option>`).join('');
+  showMod(`在「${g?.name}」新增費用`,`
+    <div class="mf"><label>費用名稱</label><input type="text" id="ac-n" autofocus></div>
+    <div class="mf"><label>廠商（選填）</label><input type="text" id="ac-v"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="mf"><label>分攤基準</label>
+        <select id="ac-b"><option value="area">坪數比例</option><option value="headcount">人數比例</option></select>
+      </div>
+      <div class="mf"><label>適用公司（選填）</label>
+        <select id="ac-co"><option value="">全部公司</option>${COMPANIES.map(c=>`<option value="${c}">${c}</option>`).join('')}</select>
+      </div>
+    </div>
+    <div class="mf"><label>綁定區域（選填）</label><select id="ac-z">${leaseOpts}</select></div>
+    <div class="mf"><label>金額（元）</label><input type="number" id="ac-a" min="0"></div>
+  `,()=>{
+    const n = document.getElementById('ac-n').value.trim();
+    const a = +document.getElementById('ac-a').value;
+    if(!n||!a){ toast('請填寫名稱與金額'); return; }
+    const zRaw = document.getElementById('ac-z').value;
+    g.items.push({ id:nid(), name:n, vendor:document.getElementById('ac-v').value.trim(),
+      basis:document.getElementById('ac-b').value, zoneId:zRaw?+zRaw:null,
+      hcCompany:document.getElementById('ac-co').value||null, amount:a });
+    closeMod(); ds(); renderCost(); renderResult();
+  });
+}
+function openBatchMod(gid){
+  const g = (S.costGroups||[]).find(g=>g.id===gid);
+  showMod(`批量新增到「${g?.name}」`,`
+    <div style="font-size:12px;color:var(--text2);margin-bottom:7px">每行一筆：<code style="background:var(--surface2);padding:1px 5px;border-radius:3px">名稱, 金額, 廠商（選填）</code></div>
+    <textarea id="bm-ta" rows="7" style="width:100%;font-size:12px;font-family:var(--mono);padding:6px;border:1px solid var(--border2);border-radius:var(--radius);resize:vertical"></textarea>
+  `,()=>{
+    let n = 0;
+    document.getElementById('bm-ta').value.split('\n').forEach(l=>{
+      const p = l.trim().split(',').map(x=>x.trim());
+      if(!p[0]||!+p[1]) return;
+      g.items.push({id:nid(),name:p[0],vendor:p[2]||'',basis:'area',zoneId:null,hcCompany:null,amount:+p[1]});
+      n++;
+    });
+    if(!n){ toast('沒有可匯入的資料'); return; }
+    closeMod(); ds(); renderCost(); renderResult(); toast(`已新增 ${n} 筆`);
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+//  RENDER: RESULT
+// ═══════════════════════════════════════════════════════
+function renderResult(){
+  const view = document.getElementById('result-view')?.value||'dept';
+  const costs = allCosts();
+  const emps = (S.emps||[]).filter(e=>e.active!==false);
+  const totalCost = costs.reduce((s,c)=>s+(c.amount||0),0);
+  const utiCount = totalManualHC('UTI'), usfCount = totalManualHC('USF'), rgcCount = totalManualHC('RGC');
+
+  document.getElementById('result-metrics').innerHTML = `
+    <div class="mcard"><div class="mcard-lbl">費用總額</div><div class="mcard-val" style="color:var(--blue)">${fmtMoney(totalCost)}</div><div class="mcard-sub">${costs.length} 項費用</div></div>
+    <div class="mcard"><div class="mcard-lbl">攸泰科技（UTI+USF）</div><div class="mcard-val" style="color:var(--teal)">${utiCount+usfCount} 人</div><div class="mcard-sub">UTI ${utiCount} + USF ${usfCount}</div></div>
+    <div class="mcard"><div class="mcard-lbl">睿剛電訊（RGC）</div><div class="mcard-val" style="color:var(--amber)">${rgcCount} 人</div><div class="mcard-sub">合計 ${utiCount+usfCount+rgcCount} 人</div></div>
+    <div class="mcard"><div class="mcard-lbl">分攤期間</div><div class="mcard-val" style="font-size:13px;color:var(--text2)">${esc(S.period||'—')}</div></div>
+  `;
+  if(!emps.length||!costs.length){
+    document.getElementById('result-wrap').innerHTML = '<div style="padding:28px;text-align:center;color:var(--text3)">請先設定員工座位與費用項目</div>';
+    return;
+  }
+  if(view==='emp') renderResultEmp(emps,costs);
+  else if(view==='zone') renderResultZone(emps,costs);
+  else renderResultDept(emps,costs);
+}
+
+function buildResultTable(minW, headCells, bodyRows, footCells){
+  document.getElementById('result-wrap').innerHTML = `<div class="rt-wrap">
+    <div class="rt-hd" style="min-width:${minW}px">${headCells}</div>
+    <div>${bodyRows.join('')}</div>
+    <div class="rt-ft" style="min-width:${minW}px">${footCells}</div>
+  </div>`;
+}
+
+function renderResultDept(emps,costs){
+  const depts = {};
+  emps.forEach(e=>{ const k=e.deptCode||'(無代碼)'; if(!depts[k]) depts[k]={code:k,name:e.deptName||'',emps:[]}; if(e.deptName&&!depts[k].name) depts[k].name=e.deptName; depts[k].emps.push(e); });
+  const C={DEPT:200,CNT:55,AREA:90,PCT:80,C:95,TOT:110};
+  const minW=C.DEPT+C.CNT+C.AREA+C.PCT+costs.length*C.C+C.TOT;
+  const headCells=`<div class="rc nm" style="min-width:${C.DEPT}px">部門</div><div class="rc" style="width:${C.CNT}px">人數</div><div class="rc" style="width:${C.AREA}px">合計坪數</div><div class="rc" style="width:${C.PCT}px">坪數比例</div>${costs.map(c=>`<div class="rc" style="width:${C.C}px;font-size:10px;line-height:1.4">${esc(c.name)}</div>`).join('')}<div class="rc" style="width:${C.TOT}px;color:var(--blue)">分攤小計</div>`;
+  const grandTotals=costs.map(()=>0);
+  const rows=Object.values(depts).sort((a,b)=>a.code.localeCompare(b.code)).map(d=>{
+    const dArea=d.emps.reduce((s,e)=>s+allocArea(e),0);
+    const vals=costs.map(c=>d.emps.reduce((s,e)=>s+empCostAlloc(c,e),0));
+    const sub=vals.reduce((s,v)=>s+v,0);
+    vals.forEach((v,i)=>grandTotals[i]+=v);
+    return `<div class="rt-row dept-row" style="min-width:${minW}px"><div class="rc nm" style="min-width:${C.DEPT}px;font-weight:600"><span style="font-size:10.5px;font-family:var(--mono);background:var(--blue-bg);color:var(--blue);padding:1px 5px;border-radius:3px">${esc(d.code)}</span>${esc(d.name)}</div><div class="rc" style="width:${C.CNT}px">${d.emps.length}</div><div class="rc" style="width:${C.AREA}px">${fmt4(dArea)}</div><div class="rc" style="width:${C.PCT}px;color:var(--text3)">—</div>${vals.map(v=>`<div class="rc" style="width:${C.C}px">${fmtMoney(v)}</div>`).join('')}<div class="rc" style="width:${C.TOT}px;color:var(--blue);font-weight:600">${fmtMoney(sub)}</div></div>`;
+  });
+  const footCells=`<div class="rc nm" style="min-width:${C.DEPT}px">合計</div><div class="rc" style="width:${C.CNT}px">${emps.length}</div><div class="rc" style="width:${C.AREA}px">${fmt4(emps.reduce((s,e)=>s+allocArea(e),0))}</div><div class="rc" style="width:${C.PCT}px"></div>${grandTotals.map(t=>`<div class="rc" style="width:${C.C}px">${fmtMoney(t)}</div>`).join('')}<div class="rc" style="width:${C.TOT}px;color:var(--blue)">${fmtMoney(grandTotals.reduce((s,v)=>s+v,0))}</div>`;
+  buildResultTable(minW,headCells,rows,footCells);
+}
+
+function renderResultEmp(emps,costs){
+  const C={EMP:60,CO:55,NM:90,DC:75,ZONE:68,AREA:90,PCT:80,C:90,TOT:105};
+  const minW=C.EMP+C.CO+C.NM+C.DC+C.ZONE+C.AREA+C.PCT+costs.length*C.C+C.TOT;
+  const headCells=`<div class="rc" style="width:${C.EMP}px">員編</div><div class="rc" style="width:${C.CO}px">公司</div><div class="rc nm" style="min-width:${C.NM}px">姓名</div><div class="rc" style="width:${C.DC}px">部門</div><div class="rc" style="width:${C.ZONE}px">區域</div><div class="rc" style="width:${C.AREA}px">合計坪數</div><div class="rc" style="width:${C.PCT}px">坪數比例</div>${costs.map(c=>`<div class="rc" style="width:${C.C}px;font-size:10px;line-height:1.4">${esc(c.name)}</div>`).join('')}<div class="rc" style="width:${C.TOT}px;color:var(--blue)">個人分攤合計</div>`;
+  const grandTotals=costs.map(()=>0);
+  const rows=emps.map(e=>{
+    const l=getLease(e.leaseId);const aa=allocArea(e);const ar=areaRatio(e);
+    const vals=costs.map(c=>empCostAlloc(c,e));const sub=vals.reduce((s,v)=>s+v,0);vals.forEach((v,i)=>grandTotals[i]+=v);
+    return `<div class="rt-row" style="min-width:${minW}px"><div class="rc" style="width:${C.EMP}px;font-family:var(--mono);font-size:11px">${esc(e.empNo)}</div><div class="rc" style="width:${C.CO}px">${esc(e.company)}</div><div class="rc nm" style="min-width:${C.NM}px">${esc(e.name)}</div><div class="rc" style="width:${C.DC}px;font-size:10.5px;font-family:var(--mono)">${esc(e.deptCode)}</div><div class="rc" style="width:${C.ZONE}px;font-size:11px">${esc(l?l.zone:'—')}</div><div class="rc" style="width:${C.AREA}px">${fmt4(aa)}</div><div class="rc" style="width:${C.PCT}px;font-size:11px;color:var(--text2)">${fmtPct(ar)}</div>${vals.map(v=>`<div class="rc" style="width:${C.C}px">${fmtMoney(v)}</div>`).join('')}<div class="rc" style="width:${C.TOT}px;color:var(--blue);font-weight:600">${fmtMoney(sub)}</div></div>`;
+  });
+  const footCells=`<div class="rc" style="width:${C.EMP+C.CO}px">合計</div><div class="rc nm" style="min-width:${C.NM}px"></div><div class="rc" style="width:${C.DC+C.ZONE}px"></div><div class="rc" style="width:${C.AREA}px">${fmt4(emps.reduce((s,e)=>s+allocArea(e),0))}</div><div class="rc" style="width:${C.PCT}px"></div>${grandTotals.map(t=>`<div class="rc" style="width:${C.C}px">${fmtMoney(t)}</div>`).join('')}<div class="rc" style="width:${C.TOT}px;color:var(--blue)">${fmtMoney(grandTotals.reduce((s,v)=>s+v,0))}</div>`;
+  buildResultTable(minW,headCells,rows,footCells);
+}
+
+function renderResultZone(emps,costs){
+  const zones={};
+  emps.forEach(e=>{ const l=getLease(e.leaseId);const k=l?`${l.zone}(${l.company})`:'未分配';if(!zones[k])zones[k]={label:k,emps:[],lease:l};zones[k].emps.push(e); });
+  const C={ZONE:140,CNT:55,AREA:95,PCT:80,C:95,TOT:110};
+  const minW=C.ZONE+C.CNT+C.AREA+C.PCT+costs.length*C.C+C.TOT;
+  const headCells=`<div class="rc nm" style="min-width:${C.ZONE}px">區域</div><div class="rc" style="width:${C.CNT}px">人數</div><div class="rc" style="width:${C.AREA}px">合計分攤坪數</div><div class="rc" style="width:${C.PCT}px">區域坪數</div>${costs.map(c=>`<div class="rc" style="width:${C.C}px;font-size:10px">${esc(c.name)}</div>`).join('')}<div class="rc" style="width:${C.TOT}px;color:var(--blue)">區域分攤合計</div>`;
+  const grandTotals=costs.map(()=>0);
+  const rows=Object.values(zones).map(z=>{ const zArea=z.emps.reduce((s,e)=>s+allocArea(e),0);const vals=costs.map(c=>z.emps.reduce((s,e)=>s+empCostAlloc(c,e),0));const sub=vals.reduce((s,v)=>s+v,0);vals.forEach((v,i)=>grandTotals[i]+=v);return `<div class="rt-row" style="min-width:${minW}px"><div class="rc nm" style="min-width:${C.ZONE}px;font-weight:600">${esc(z.label)}</div><div class="rc" style="width:${C.CNT}px">${z.emps.length}</div><div class="rc" style="width:${C.AREA}px">${fmt4(zArea)}</div><div class="rc" style="width:${C.PCT}px;color:var(--text3)">${z.lease?fmt4(z.lease.totalArea)+' 坪':'—'}</div>${vals.map(v=>`<div class="rc" style="width:${C.C}px">${fmtMoney(v)}</div>`).join('')}<div class="rc" style="width:${C.TOT}px;color:var(--blue);font-weight:600">${fmtMoney(sub)}</div></div>`; });
+  const footCells=`<div class="rc nm" style="min-width:${C.ZONE}px">合計</div><div class="rc" style="width:${C.CNT}px">${emps.length}</div><div class="rc" style="width:${C.AREA+C.PCT}px"></div>${grandTotals.map(t=>`<div class="rc" style="width:${C.C}px">${fmtMoney(t)}</div>`).join('')}<div class="rc" style="width:${C.TOT}px;color:var(--blue)">${fmtMoney(grandTotals.reduce((s,v)=>s+v,0))}</div>`;
+  buildResultTable(minW,headCells,rows,footCells);
+}
+
+// ═══════════════════════════════════════════════════════
+//  ANALYSIS
+// ═══════════════════════════════════════════════════════
+function renderAnalysis(){
+  const costs = allCosts();
+  const emps = (S.emps||[]).filter(e=>e.active!==false);
+  const totalCost = costs.reduce((s,c)=>s+(c.amount||0),0);
+
+  // Metrics
+  document.getElementById('analysis-metrics').innerHTML = `
+    <div class="mcard"><div class="mcard-lbl">費用總額</div><div class="mcard-val" style="color:var(--blue)">${fmtMoney(totalCost)}</div><div class="mcard-sub">${costs.length} 項費用</div></div>
+    <div class="mcard"><div class="mcard-lbl">員工人數</div><div class="mcard-val">${emps.length}</div><div class="mcard-sub">在職人員</div></div>
+    <div class="mcard"><div class="mcard-lbl">人均分攤</div><div class="mcard-val" style="color:var(--teal)">${emps.length?fmtMoney(totalCost/emps.length):'—'}</div><div class="mcard-sub">費用 / 人數</div></div>
+    <div class="mcard"><div class="mcard-lbl">費用群組數</div><div class="mcard-val">${(S.costGroups||[]).length}</div><div class="mcard-sub">${(S.costGroups||[]).filter(g=>g.items?.length>0).length} 個有費用</div></div>
+  `;
+
+  // Top depts
+  const deptMap = {};
+  emps.forEach(e=>{
+    const dept = e.deptName || e.deptCode || '未分類';
+    if(!deptMap[dept]) deptMap[dept]=0;
+    costs.forEach(c=>{ deptMap[dept]+=empCostAlloc(c,e); });
+  });
+  const topDepts = Object.entries(deptMap).map(([k,v])=>({dept:k,amount:v})).sort((a,b)=>b.amount-a.amount).slice(0,5);
+  const maxDept = topDepts[0]?.amount||1;
+  document.getElementById('analysis-top-dept').innerHTML = topDepts.length ?
+    topDepts.map((t,i)=>{
+      const colors=['var(--blue)','var(--teal)','var(--amber)','#7c6a3e','var(--text2)'];
+      return `<div class="bar-wrap"><div class="bar-label"><span>${esc(t.dept)}</span><span style="font-family:var(--mono);font-weight:600">${fmtMoney(t.amount)}</span></div><div class="bar-track"><div class="bar-fill" style="width:${(t.amount/maxDept*100).toFixed(1)}%;background:${colors[i]}"></div></div></div>`;
+    }).join('') : '<div style="color:var(--text3);padding:12px;font-size:12.5px">無資料</div>';
+
+  // Cost breakdown
+  const topCosts = costs.filter(c=>c.amount>0).sort((a,b)=>b.amount-a.amount).slice(0,6);
+  const others = costs.filter(c=>c.amount>0).slice(6).reduce((s,c)=>s+c.amount,0);
+  document.getElementById('analysis-cost-breakdown').innerHTML = topCosts.length ?
+    [...topCosts.map(c=>({name:c.name,amt:c.amount})), ...(others>0?[{name:'其他',amt:others}]:[])].map((c)=>{
+      const pct = totalCost?(c.amt/totalCost*100):0;
+      return `<div class="bar-wrap"><div class="bar-label"><span style="font-size:11.5px">${esc(c.name)}</span><span style="font-family:var(--mono);font-size:11.5px">${pct.toFixed(1)}%</span></div><div class="bar-track"><div class="bar-fill" style="width:${pct.toFixed(1)}%;background:${pct>30?'var(--red)':'var(--blue)'}"></div></div></div>`;
+    }).join('') : '<div style="color:var(--text3);padding:12px;font-size:12.5px">無費用資料</div>';
+
+  // Anomalies
+  const threshold = +document.getElementById('anom-threshold').value/100 || 0.3;
+  const anomalies = costs.filter(c=>c.amount>totalCost*threshold);
+  document.getElementById('analysis-anomalies').innerHTML = anomalies.length ?
+    anomalies.map(c=>`<div class="val-item"><div class="val-icon warn">⚠</div><div>「${esc(c.name)}」金額 ${fmtMoney(c.amount)} 佔總費用 ${((c.amount/totalCost)*100).toFixed(1)}%，超過設定門檻</div></div>`).join('') :
+    '<div class="val-item"><div class="val-icon ok">✓</div><div style="color:var(--text2)">無異常費用項目</div></div>';
+
+  // Version diff selects
+  const versions = getLocalVersions();
+  const opts = versions.map((v,i)=>`<option value="${i}">${v.note||'版本 '+(i+1)} (${new Date(v.ts).toLocaleDateString('zh-TW')})</option>`).join('');
+  document.getElementById('diff-from').innerHTML = '<option value="">— 比較來源 —</option>' + opts;
+  document.getElementById('diff-to').innerHTML = '<option value="current">目前版本</option>' + opts;
+}
+
+function renderDiff(){
+  const fromIdx = document.getElementById('diff-from').value;
+  const toIdx = document.getElementById('diff-to').value;
+  if(fromIdx === ''){ toast('請選擇比較來源'); return; }
+  const versions = getLocalVersions();
+  const from = versions[+fromIdx];
+  const to = toIdx === 'current' ? S : versions[+toIdx]?.data;
+  if(!from||!to){ toast('版本資料不足'); return; }
+  const fromTotal = (from.data?.costGroups||[]).flatMap(g=>g.items||[]).reduce((s,c)=>s+c.amount,0);
+  const toTotal = (to.costGroups||[]).flatMap(g=>g.items||[]).reduce((s,c)=>s+c.amount,0);
+  const diff = toTotal - fromTotal;
+  const fromEmps = (from.data?.emps||[]).filter(e=>e.active!==false).length;
+  const toEmps = (to.emps||[]).filter(e=>e.active!==false).length;
+  document.getElementById('analysis-diff').innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+      <div class="mcard"><div class="mcard-lbl">費用差異</div><div class="mcard-val" style="color:${diff>0?'var(--red)':diff<0?'var(--green)':'var(--text2)'}">${diff>0?'+':''}${fmtMoney(diff)}</div></div>
+      <div class="mcard"><div class="mcard-lbl">員工人數差異</div><div class="mcard-val">${toEmps-fromEmps>0?'+':''}${toEmps-fromEmps} 人</div></div>
+      <div class="mcard"><div class="mcard-lbl">來源版本費用</div><div class="mcard-val" style="font-size:13px">${fmtMoney(fromTotal)} → ${fmtMoney(toTotal)}</div></div>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════════════
+//  VALIDATION
+// ═══════════════════════════════════════════════════════
+function runValidation(){
+  const issues = [], ok = [];
+  const emps = (S.emps||[]).filter(e=>e.active!==false);
+  const noSize = emps.filter(e=>!e.len||!e.wid);
+  if(noSize.length) issues.push(`${noSize.length} 位員工未填座位尺寸（${noSize.slice(0,3).map(e=>e.name).join('、')}${noSize.length>3?'…':''}）`);
+  else ok.push('所有員工均已填寫座位尺寸');
+
+  (S.leases||[]).forEach(l=>{
+    const totalEmpArea = emps.filter(e=>e.leaseId===l.id).reduce((s,e)=>s+allocArea(e),0);
+    const tol = Math.max(0.5, l.totalArea*0.005);
+    if(l.totalArea>0 && Math.abs(totalEmpArea-l.totalArea)>tol)
+      issues.push(`區域 ${l.zone} 坪數不平衡（員工合計 ${fmt4(totalEmpArea)} 坪 vs 區域 ${fmt4(l.totalArea)} 坪，差 ${fmt4(Math.abs(totalEmpArea-l.totalArea))} 坪）`);
+    else if(l.totalArea>0)
+      ok.push(`區域 ${l.zone} 坪數平衡`);
+  });
+
+  const deptSet = new Set(emps.map(e=>e.deptCode).filter(Boolean));
+  const missingHC = [...deptSet].filter(d=>!(S.headcounts||[]).find(h=>h.deptCode===d));
+  if(missingHC.length) issues.push(`${missingHC.length} 個部門代碼無人數設定：${missingHC.slice(0,3).join('、')}${missingHC.length>3?'…':''}`);
+  else if(deptSet.size>0) ok.push('所有部門均有人數設定');
+
+  const noLease = emps.filter(e=>!getLease(e.leaseId));
+  if(noLease.length) issues.push(`${noLease.length} 位員工未綁定租約區域`);
+  else if(emps.length>0) ok.push('所有員工均已綁定租約');
+
+  const emptyCosts = allCosts().filter(c=>!c.amount);
+  if(emptyCosts.length) issues.push(`${emptyCosts.length} 個費用項目金額為 0`);
+
+  document.getElementById('validation-list').innerHTML = [
+    ...issues.map(msg=>`<div class="val-item"><div class="val-icon err">✗</div><div>${msg}</div></div>`),
+    ...ok.map(msg=>`<div class="val-item"><div class="val-icon ok">✓</div><div style="color:var(--text2)">${msg}</div></div>`)
+  ].join('') || '<div class="val-item"><div class="val-icon ok">✓</div><div>無資料可檢查</div></div>';
+}
+
+// ═══════════════════════════════════════════════════════
+//  VERSION HISTORY
+// ═══════════════════════════════════════════════════════
+function getLocalVersions(){
+  try{ return JSON.parse(localStorage.getItem('alloc_versions')||'[]'); } catch(e){ return []; }
+}
+function setLocalVersions(versions){
+  try{ localStorage.setItem('alloc_versions', JSON.stringify(versions.slice(-20))); } catch(e){ toast('版本儲存失敗'); }
+}
+
+function saveVersion(note, silent){
+  const n = note || document.getElementById('version-note')?.value?.trim() || `手動儲存 ${new Date().toLocaleString('zh-TW')}`;
+  const versions = getLocalVersions();
+  versions.push({ ts: new Date().toISOString(), note: n, data: JSON.parse(JSON.stringify(S)) });
+  setLocalVersions(versions);
+  if(!silent) toast('📌 版本已儲存：'+n);
+  if(document.getElementById('version-note')) document.getElementById('version-note').value = '';
+  renderVersionList();
+  // Also sync to cloud if connected
+  if(GS.url) syncToSheets(true, n);
+}
+
+function renderVersionList(){
+  const versions = getLocalVersions().slice().reverse();
+  const el = document.getElementById('version-list');
+  if(!el) return;
+  if(!versions.length){ el.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3);font-size:12.5px">尚無版本紀錄</div>'; return; }
+  el.innerHTML = versions.map((v,i)=>{
+    const isLatest = i===0;
+    const d = new Date(v.ts);
+    const timeStr = d.toLocaleString('zh-TW',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+    return `<div class="version-item">
+      <span class="version-tag${isLatest?' current':''}">${isLatest?'最新':('v'+(versions.length-i))}</span>
+      <span class="version-time">${timeStr}</span>
+      <span class="version-note">${esc(v.note||'（無說明）')}</span>
+      <div class="version-actions">
+        <button class="btn btn-sm" onclick="restoreVersion(${versions.length-1-i})">還原</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function restoreVersion(idx){
+  const versions = getLocalVersions();
+  if(!versions[idx]){ toast('找不到此版本'); return; }
+  const v = versions[idx];
+  showConf(`確定還原到「${v.note}」（${new Date(v.ts).toLocaleString('zh-TW')}）？目前資料將被覆蓋，建議先存版本。`,()=>{
+    S = JSON.parse(JSON.stringify(v.data));
+    _uid = 3000;
+    ds(); renderAll(); toast('✓ 已還原版本：'+v.note);
+  });
+}
+
+async function loadCloudHistory(){
+  if(!GS.url){ toast('請先設定 Google Sheets 連線'); return; }
+  const btn = document.getElementById('btn-load-history');
+  btn.textContent = '載入中…'; btn.disabled = true;
+  try{
+    const resp = await callGAS({action:'history'});
+    if(!resp.ok) throw new Error(resp.msg||'失敗');
+    const cloud = resp.versions||[];
+    const el = document.getElementById('version-list');
+    if(!cloud.length){ el.innerHTML += '<div style="padding:12px;font-size:12px;color:var(--text3);border-top:1px solid var(--border)">☁ 雲端無版本紀錄</div>'; return; }
+    const existing = el.innerHTML;
+    el.innerHTML = existing + `<div style="padding:8px 12px;font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.06em;text-transform:uppercase;border-top:2px solid var(--border);margin-top:4px">☁ 雲端版本</div>` +
+      cloud.slice(0,20).map((v,i)=>{
+        const d = new Date(v.ts);
+        const timeStr = d.toLocaleString('zh-TW',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+        return `<div class="version-item">
+          <span class="version-tag" style="background:var(--teal-bg);color:var(--teal)">☁ 雲端</span>
+          <span class="version-time">${timeStr}</span>
+          <span class="version-note">${esc(v.note||'（無說明）')}</span>
+          <div class="version-actions">
+            <button class="btn btn-sm btn-teal" onclick="restoreCloudVersion(${i}, this)">還原</button>
+          </div>
+        </div>`;
+      }).join('');
+    window._cloudVersions = cloud;
+    toast(`☁ 載入 ${cloud.length} 個雲端版本`);
+  } catch(err){ toast('☁ 載入失敗：'+err.message); }
+  finally{ btn.textContent = '☁ 載入雲端版本'; btn.disabled = false; }
+}
+
+function restoreCloudVersion(idx, btn){
+  const v = window._cloudVersions?.[idx];
+  if(!v){ toast('版本資料遺失'); return; }
+  let data;
+  try{ data = typeof v.data === 'string' ? JSON.parse(v.data) : v.data; } catch(e){ toast('版本資料格式錯誤'); return; }
+  showConf(`確定還原雲端版本「${v.note}」？`, ()=>{
+    S = JSON.parse(JSON.stringify(data));
+    _uid = 3000;
+    ds(); renderAll(); toast('✓ 已還原雲端版本：'+v.note);
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+//  GOOGLE SHEETS INTEGRATION
+// ═══════════════════════════════════════════════════════
+let GS = { url:'', sheetId:'', token:'', autoSync: true };
+
+function loadGsConfig(){
+  try{ const r = localStorage.getItem('gs_config'); if(r){ GS = {...GS,...JSON.parse(r)}; } } catch(e){}
+  if(document.getElementById('gs-url')) document.getElementById('gs-url').value = GS.url||'';
+  if(document.getElementById('gs-sheet-id')) document.getElementById('gs-sheet-id').value = GS.sheetId||'';
+  if(document.getElementById('gs-token')){
+    document.getElementById('gs-token').value = GS.token||'';
+    document.getElementById('gs-token').type = 'password';
+  }
+  updateCloudUI();
+}
+
+function saveGsConfig(){
+  GS.url = document.getElementById('gs-url').value.trim();
+  GS.sheetId = document.getElementById('gs-sheet-id').value.trim();
+  GS.token = document.getElementById('gs-token').value.trim();
+  if(!GS.token){ toast('⚠ 請填寫或產生 Token，否則無法保護雲端資料'); return; }
+  try{ localStorage.setItem('gs_config', JSON.stringify(GS)); } catch(e){}
+  updateCloudUI();
+  toast('✓ 雲端設定已儲存');
+}
+
+function generateToken(){
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const arr = new Uint8Array(32);
+  crypto.getRandomValues(arr);
+  const token = Array.from(arr).map(b => chars[b % chars.length]).join('');
+  const el = document.getElementById('gs-token');
+  el.value = token;
+  el.type = 'text';
+  navigator.clipboard.writeText(token).catch(()=>{});
+  toast('🔑 已產生 Token，請複製後貼入 Apps Script 第 2 行');
+}
+
+let _tokenVisible = false;
+function toggleTokenVis(){
+  _tokenVisible = !_tokenVisible;
+  const el = document.getElementById('gs-token');
+  el.type = _tokenVisible ? 'text' : 'password';
+  document.getElementById('btn-tok-vis').textContent = _tokenVisible ? '🙈' : '👁';
+}
+
+function updateCloudUI(){
+  const badge = document.getElementById('sync-badge');
+  const status = document.getElementById('cloud-current-status');
+  const hasToken = !!GS.token;
+  if(GS.url && hasToken){
+    badge.className = 'sync-badge ok';
+    badge.textContent = '☁ 雲端已連線';
+    if(status) status.className = 'notice ok';
+    if(status) status.innerHTML = `✓ 已設定 Google Sheets 連線，Token 保護已啟用。<br>Spreadsheet ID：<code style="font-family:var(--mono);font-size:11px">${esc(GS.sheetId||'（未填）')}</code>`;
+  } else if(GS.url && !hasToken){
+    badge.className = 'sync-badge err';
+    badge.textContent = '☁ 缺少 Token';
+    if(status){ status.className='notice warn'; status.innerHTML='已填寫部署網址，但尚未設定 Token，雲端資料未受保護。請填入 Token 並重新儲存設定。'; }
+  } else {
+    badge.className = 'sync-badge off';
+    badge.textContent = '☁ 未連線雲端';
+    if(status){ status.className='notice'; status.innerHTML='尚未設定 Google Sheets 連線。'; }
+  }
+}
+
+async function callGAS(payload){
+  const resp = await fetch(GS.url, {
+    method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify({ ...payload, token: GS.token })
+  });
+  if(!resp.ok) throw new Error('HTTP '+resp.status);
+  const data = await resp.json();
+  if(!data.ok && data.msg === 'Unauthorized') throw new Error('Token 驗證失敗，請確認 Apps Script 的 SECRET_TOKEN 與系統設定一致');
+  return data;
+}
+
+async function syncToSheets(silent, note){
+  if(!GS.url) return;
+  if(!GS.token){ if(!silent) toast('⚠ 尚未設定 Token，請先完成雲端設定'); return; }
+  const badge = document.getElementById('sync-badge');
+  badge.className = 'sync-badge syncing'; badge.textContent = '☁ 同步中…';
+  try{
+    const res = await callGAS({ action:'save', data: S, version:{ note: note||S.period||'自動儲存' } });
+    if(!res.ok) throw new Error(res.msg||'失敗');
+    badge.className = 'sync-badge ok'; badge.textContent = '☁ 已同步 '+new Date(res.ts).toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'});
+    if(!silent) toast('☁ 已同步到 Google Sheets');
+  } catch(err){
+    badge.className = 'sync-badge err'; badge.textContent = '☁ 同步失敗';
+    if(!silent) toast('☁ 同步失敗：'+err.message);
+  }
+}
+
+async function syncFromSheets(){
+  if(!GS.url){ toast('請先設定 Google Sheets 連線'); return; }
+  if(!GS.token){ toast('⚠ 尚未設定 Token，請先完成雲端設定'); return; }
+  const badge = document.getElementById('sync-badge');
+  badge.className = 'sync-badge syncing'; badge.textContent = '☁ 讀取中…';
+  try{
+    const res = await callGAS({action:'load'});
+    if(!res.ok) throw new Error(res.msg||'失敗');
+    if(!res.data){ toast('☁ 雲端無資料'); badge.className='sync-badge ok'; return; }
+    showConf('確定從雲端覆蓋本機資料？目前未儲存的變更將遺失。',()=>{
+      S = res.data; _uid = 3000; ds(); renderAll();
+      badge.className='sync-badge ok'; badge.textContent='☁ 已從雲端讀取';
+      toast('☁ 已從 Google Sheets 讀取資料');
+    });
+  } catch(err){
+    badge.className = 'sync-badge err'; badge.textContent = '☁ 讀取失敗';
+    toast('☁ 讀取失敗：'+err.message);
+  }
+}
+
+async function testGsConnection(){
+  const url = document.getElementById('gs-url').value.trim();
+  const token = document.getElementById('gs-token').value.trim();
+  if(!url){ toast('請填寫部署網址'); return; }
+  if(!token){ toast('請先填寫或產生 Token'); return; }
+  const el = document.getElementById('gs-test-result');
+  el.innerHTML = '<span style="font-size:12px;color:var(--amber)">🔗 測試中…</span>';
+  try{
+    const resp = await fetch(url, {
+      method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({action:'load', token})
+    });
+    if(!resp.ok) throw new Error('HTTP '+resp.status);
+    const data = await resp.json();
+    if(!data.ok && data.msg === 'Unauthorized'){
+      el.innerHTML = `<span style="font-size:12px;color:var(--red)">✗ Token 驗證失敗：請確認 Apps Script 第 2 行的 SECRET_TOKEN 與此處 Token 完全一致。</span>`;
+      return;
+    }
+    el.innerHTML = `<span style="font-size:12px;color:var(--green)">✓ 連線成功，Token 驗證通過！${data.data?'雲端有資料可讀取。':'雲端目前無資料（初次使用正常）。'}</span>`;
+  } catch(err){
+    el.innerHTML = `<span style="font-size:12px;color:var(--red)">✗ 連線失敗：${esc(err.message)}。請確認部署網址正確，且執行身分 / 存取權設定為「任何人」。</span>`;
+  }
+}
+
+function disconnectSheets(){
+  showConf('確定斷開 Google Sheets 連線？所有雲端設定（含 Token）將被清除。',()=>{
+    GS = {url:'',sheetId:'',token:'',autoSync:true};
+    localStorage.removeItem('gs_config');
+    if(document.getElementById('gs-url')) document.getElementById('gs-url').value='';
+    if(document.getElementById('gs-sheet-id')) document.getElementById('gs-sheet-id').value='';
+    if(document.getElementById('gs-token')) document.getElementById('gs-token').value='';
+    updateCloudUI(); toast('已斷開雲端連線');
+  });
+}
+
+function copyGasCode(){
+  const code = document.getElementById('gas-code-box').innerText.replace('複製','').trim();
+  navigator.clipboard.writeText(code).then(()=>toast('✓ 程式碼已複製')).catch(()=>toast('請手動選取複製'));
+}
+
+// ═══════════════════════════════════════════════════════
+//  IMPORT
+// ═══════════════════════════════════════════════════════
+let _impWb=null,_impRows=[],_impHdrs=[],_impColMap=[];
+const IMP_AUTO={'所在區域':'zone','公司':'company','員編':'empno','姓名':'name','在職狀態':'status','202501版\n部門代碼':'deptcode','部門代碼':'deptcode','202501版\n部門名稱':'deptname','部門名稱':'deptname','長度cm':'len','寬度cm':'wid','合計\n分攤坪數':'allocarea','合計分攤坪數':'allocarea'};
+const IMP_LABELS={zone:'所在區域',company:'公司',empno:'員編',name:'姓名',status:'在職狀態',deptcode:'部門代碼',deptname:'部門名稱',len:'長度cm',wid:'寬度cm',allocarea:'合計分攤坪數',ignore:'忽略'};
+
+function loadSheetJS(cb){
+  if(typeof XLSX!=='undefined'){cb();return;}
+  const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';s.onload=cb;s.onerror=()=>toast('無法載入 Excel 套件');document.head.appendChild(s);
+}
+function handleImpFile(inp){ const f=inp.files[0];if(!f)return; loadSheetJS(()=>{ const r=new FileReader();r.onload=e=>{try{_impWb=XLSX.read(e.target.result,{type:'array'});const sheets=_impWb.SheetNames;document.getElementById('imp-sheet').innerHTML=sheets.map((s,i)=>`<option value="${i}">${s}</option>`).join('');loadImpSheet();}catch(e){toast('讀取失敗：'+e.message);}};r.readAsArrayBuffer(f); }); }
+function handleDrop(e){ e.preventDefault();document.getElementById('dz').classList.remove('dz-over');const f=e.dataTransfer.files[0];if(!f||!f.name.match(/\.xlsx?$/i)){toast('請上傳 .xlsx 格式');return;}const inp=document.getElementById('imp-file');const dt=new DataTransfer();dt.items.add(f);inp.files=dt.files;handleImpFile(inp); }
+function loadImpSheet(){ if(!_impWb)return;const idx=+document.getElementById('imp-sheet').value;const ws=_impWb.Sheets[_impWb.SheetNames[idx]];const data=XLSX.utils.sheet_to_json(ws,{header:1,defval:null});if(!data||data.length<2){toast('工作表無資料');return;}_impHdrs=data[0].map(h=>String(h||'').trim());_impRows=data.slice(1).filter(r=>r.some(v=>v!==null&&v!==''));_impColMap=_impHdrs.map(h=>IMP_AUTO[h]||'ignore');document.getElementById('imp-count').textContent=`共 ${_impRows.length} 筆`;renderImpPreview();document.getElementById('imp-s1').style.display='none';document.getElementById('imp-s2').style.display='block';document.getElementById('imp-s3').style.display='none'; }
+function renderImpPreview(){ const allTypes=['ignore','zone','company','empno','name','status','deptcode','deptname','len','wid','allocarea'];document.getElementById('imp-prev-head').innerHTML=`<tr style="background:var(--surface2)">${_impHdrs.map((h,i)=>`<th style="padding:5px 9px;border:1px solid var(--border);font-size:11px;min-width:90px">${esc(h)}<br><select style="font-size:11px;margin-top:3px" onchange="_impColMap[${i}]=this.value;renderImpPreview()">${allTypes.map(t=>`<option value="${t}"${_impColMap[i]===t?' selected':''}>${IMP_LABELS[t]||t}</option>`).join('')}</select></th>`).join('')}</tr>`;document.getElementById('imp-prev-body').innerHTML=_impRows.slice(0,6).map(r=>`<tr>${_impHdrs.map((_,i)=>`<td style="padding:4px 9px;border:1px solid var(--border);font-size:12px;color:${_impColMap[i]==='ignore'?'var(--text3)':'var(--text)'}">${esc(String(r[i]===null?'':r[i]))}</td>`).join('')}</tr>`).join('');document.getElementById('imp-map-notice').textContent=`已識別欄位：${_impColMap.filter(t=>t!=='ignore').map(t=>IMP_LABELS[t]).join('、')}`; }
+function parseImpRows(){ const g=t=>{const i=_impColMap.indexOf(t);return i>=0?i:-1;};return _impRows.map(r=>{const si=g('status'),s=si>=0?String(r[si]||'').trim():'';if(s&&s!=='在職')return null;const n=g('name')>=0?String(r[g('name')]||'').trim():'';if(!n)return null;return{empNo:g('empno')>=0?String(r[g('empno')]||'').trim():'',company:g('company')>=0?String(r[g('company')]||'').trim():'UTI',name:n,zone:g('zone')>=0?String(r[g('zone')]||'').trim():'',deptCode:g('deptcode')>=0?String(r[g('deptcode')]||'').trim():'',deptName:g('deptname')>=0?String(r[g('deptname')]||'').trim():'',len:g('len')>=0?+r[g('len')]||0:0,wid:g('wid')>=0?+r[g('wid')]||0:0};}).filter(Boolean); }
+function runImpDiff(){ const incoming=parseImpRows();if(!incoming.length){toast('沒有可匯入的在職員工，請確認欄位對應');return;}const existNames=new Set((S.emps||[]).map(e=>e.name));const inNames=new Set(incoming.map(r=>r.name));const toAdd=incoming.filter(r=>!existNames.has(r.name));const toKeep=incoming.filter(r=>existNames.has(r.name));const toRemove=(S.emps||[]).filter(e=>!inNames.has(e.name));window._impDiff={incoming,toAdd,toKeep,toRemove};document.getElementById('imp-diff-summary').innerHTML=`<div class="mcard"><div class="mcard-lbl">通訊錄在職人數</div><div class="mcard-val" style="color:var(--blue)">${incoming.length}</div></div><div class="mcard"><div class="mcard-lbl">新增</div><div class="mcard-val" style="color:var(--teal)">${toAdd.length} 人</div></div><div class="mcard"><div class="mcard-lbl">已存在（保留）</div><div class="mcard-val" style="color:var(--text2)">${toKeep.length} 人</div></div><div class="mcard"><div class="mcard-lbl">疑似離職</div><div class="mcard-val" style="color:var(--red)">${toRemove.length} 人</div></div>`;let det='';if(toAdd.length){det+=`<div style="padding:8px 12px;background:var(--teal-bg);font-size:12px;font-weight:600;color:var(--teal);border-bottom:1px solid var(--border)">新增 ${toAdd.length} 人</div>`;det+=toAdd.map(r=>`<div style="padding:6px 12px;border-bottom:1px solid var(--border);font-size:12.5px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span style="font-weight:500">${esc(r.name)}</span><span style="font-family:var(--mono);font-size:11px;color:var(--text3)">${esc(r.empNo)}</span><span style="font-size:11px;background:var(--blue-bg);color:var(--blue);padding:1px 6px;border-radius:3px">${esc(r.deptCode)}</span><span style="font-size:11.5px;color:var(--text2)">${esc(r.deptName)}</span><span style="font-size:11px;background:var(--surface2);border:1px solid var(--border);padding:1px 5px;border-radius:3px">${esc(r.zone)}</span>${r.len&&r.wid?`<span style="font-size:11px;color:var(--text3)">${r.len}×${r.wid}cm</span>`:''}</div>`).join('');}if(toRemove.length){det+=`<div style="padding:8px 12px;background:var(--red-bg);font-size:12px;font-weight:600;color:var(--red);border-bottom:1px solid var(--border);margin-top:2px">疑似離職 ${toRemove.length} 人（不會自動刪除，請手動確認）</div>`;det+=toRemove.map(e=>`<div style="padding:6px 12px;border-bottom:1px solid var(--border);font-size:12.5px;display:flex;gap:8px"><span style="color:var(--red);font-weight:500">${esc(e.name)}</span><span style="font-size:11.5px;color:var(--text3)">需手動確認移除</span></div>`).join('');}if(!toAdd.length&&!toRemove.length)det=`<div style="padding:24px;text-align:center;color:var(--text3)">資料與通訊錄一致，無需更新</div>`;document.getElementById('imp-diff-detail').innerHTML=det;showImpStep(3); }
+function applyImp(){ const{toAdd}=window._impDiff||{};if(!toAdd){toast('請先執行差異分析');return;}let n=0;toAdd.forEach(r=>{const lease=(S.leases||[]).find(l=>l.zone===r.zone&&l.company===r.company)||(S.leases||[]).find(l=>l.zone===r.zone);S.emps.push({id:nid(),empNo:r.empNo,company:r.company,name:r.name,leaseId:lease?lease.id:null,deptCode:r.deptCode,deptName:r.deptName,len:r.len,wid:r.wid,active:true});n++;});ds();renderEmp();renderResult();toast(`✓ 已新增 ${n} 位員工`);setTimeout(()=>{resetImp();go('emp',document.getElementById('nav-emp'));},600); }
+function showImpStep(n){ document.getElementById('imp-s1').style.display=n===1?'block':'none';document.getElementById('imp-s2').style.display=n===2?'block':'none';document.getElementById('imp-s3').style.display=n===3?'block':'none'; }
+function resetImp(){ _impWb=null;_impRows=[];_impHdrs=[];_impColMap=[];document.getElementById('imp-file').value='';showImpStep(1); }
+
+// ═══════════════════════════════════════════════════════
+//  TEMPLATES & EXPORT
+// ═══════════════════════════════════════════════════════
+function downloadHcTemplate(){
+  loadSheetJS(()=>{
+    const wb=XLSX.utils.book_new();
+    const ws=XLSX.utils.aoa_to_sheet([['公司','部門代碼','部門名稱','在職人數'],['UTI','P010','總經理室',5],['UTI','PA40','VAS美洲事業部',8],['RGC','RD10','業務部',12]]);
+    ws['!cols']=[{wch:8},{wch:12},{wch:30},{wch:10}];
+    XLSX.utils.book_append_sheet(wb,ws,'人數設定');XLSX.writeFile(wb,'人數設定匯入範本.xlsx');toast('範本已下載');
+  });
+}
+function importHcFile(inp){
+  const f=inp.files[0];if(!f)return;inp.value='';
+  loadSheetJS(()=>{const reader=new FileReader();reader.onload=e=>{try{const wb=XLSX.read(e.target.result,{type:'array'});const ws=wb.Sheets[wb.SheetNames[0]];const data=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});if(!data||data.length<2){toast('Excel 無資料');return;}const hdrs=data[0].map(h=>String(h||'').trim());const coIdx=hdrs.findIndex(h=>/公司|company/i.test(h));const dcIdx=hdrs.findIndex(h=>/部門代碼|deptcode/i.test(h));const dnIdx=hdrs.findIndex(h=>/部門名稱|deptname/i.test(h));const cntIdx=hdrs.findIndex(h=>/人數|count/i.test(h));if(cntIdx<0||dnIdx<0){toast('找不到「部門名稱」或「在職人數」欄位');return;}let added=0,updated=0;data.slice(1).forEach(row=>{const dn=String(row[dnIdx]||'').trim();const cnt=parseInt(row[cntIdx])||0;if(!dn||isNaN(cnt))return;const co=coIdx>=0?String(row[coIdx]||'').trim():'';const dc=dcIdx>=0?String(row[dcIdx]||'').trim():'';const existing=(S.headcounts||[]).find(h=>(dc&&h.deptCode===dc)||(h.deptName===dn&&h.company===co));if(existing){existing.count=cnt;if(dc&&!existing.deptCode)existing.deptCode=dc;if(co&&!existing.company)existing.company=co;updated++;}else{S.headcounts=S.headcounts||[];S.headcounts.push({id:nid(),company:co,deptCode:dc,deptName:dn,count:cnt});added++;}});ds();renderHc();renderResult();toast(`✓ 新增 ${added} 筆，更新 ${updated} 筆`);}catch(err){toast('讀取失敗：'+err.message);}};reader.readAsArrayBuffer(f);});
+}
+function downloadTemplate(){
+  loadSheetJS(()=>{
+    const zones=[...new Set((S.leases||[]).map(l=>l.zone))];const zoneHint=zones.length?zones.join(' / '):'4FA / 4FB';
+    const wb=XLSX.utils.book_new();
+    const ws=XLSX.utils.aoa_to_sheet([['所在區域','公司','員編','姓名','在職狀態','部門代碼','部門名稱','長度cm','寬度cm','備註'],[zoneHint,'UTI','U0001','張小明','在職','PA40','VAS美洲事業部',240,170,''],[zoneHint,'RGC','R0001','陳大文','在職','RD10','業務部',170,170,'']]);
+    ws['!cols']=[{wch:10},{wch:8},{wch:10},{wch:10},{wch:10},{wch:12},{wch:28},{wch:9},{wch:9},{wch:20}];
+    XLSX.utils.book_append_sheet(wb,ws,'通訊錄');
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['區域代號','公司','房東','區域總坪數','公設坪數'],...(S.leases||[]).map(l=>[l.zone,l.company,l.landlord,l.totalArea,l.pubArea])]),'區域對照表');
+    XLSX.writeFile(wb,'通訊錄匯入範本.xlsx');toast('範本已下載');
+  });
+}
+function exportExcel(){
+  loadSheetJS(()=>{
+    const emps=(S.emps||[]).filter(e=>e.active!==false);const costs=allCosts();
+    const h1=['員編','公司','姓名','部門代碼','部門名稱','區域','長(cm)','寬(cm)','座位坪數','公設坪數','合計分攤坪數','分攤比例',...costs.map(c=>c.name),'個人分攤合計'];
+    const rows1=[h1,...emps.map(e=>{const l=getLease(e.leaseId);const aa=allocArea(e),ar=areaRatio(e);const vals=costs.map(c=>+empCostAlloc(c,e).toFixed(2));return[e.empNo,e.company,e.name,e.deptCode,e.deptName,l?l.zone:'',e.len,e.wid,+seatArea(e).toFixed(4),+pubAreaForEmp(e).toFixed(4),+aa.toFixed(4),+ar.toFixed(6),...vals,+vals.reduce((s,v)=>s+v,0).toFixed(2)];})];
+    const depts={};emps.forEach(e=>{const k=e.deptCode||'(無)';if(!depts[k])depts[k]={code:k,name:e.deptName||'',emps:[]};depts[k].emps.push(e);});
+    const h2=['部門代碼','部門名稱','人數','合計坪數',...costs.map(c=>c.name),'部門分攤合計'];
+    const rows2=[h2,...Object.values(depts).map(d=>{const da=d.emps.reduce((s,e)=>s+allocArea(e),0);const vals=costs.map(c=>+d.emps.reduce((s,e)=>s+empCostAlloc(c,e),0).toFixed(2));return[d.code,d.name,d.emps.length,+da.toFixed(4),...vals,+vals.reduce((s,v)=>s+v,0).toFixed(2)];})];
+    const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows1),'個人明細');XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows2),'部門彙總');XLSX.writeFile(wb,`費用分攤${S.period?'_'+S.period:''}.xlsx`);toast('已匯出 Excel');
+  });
+}
+function exportHTML(){
+  const data=JSON.stringify(S);const escaped=data.replace(/</g,'\\u003c').replace(/>/g,'\\u003e').replace(/&/g,'\\u0026');
+  let src=document.documentElement.outerHTML;src=src.replace(/<!--EDATA_START-->[\s\S]*?<!--EDATA_END-->/g,'');
+  const script=`<!--EDATA_START--><script>(function(){try{localStorage.setItem('alloc_v4',JSON.stringify(${escaped}));}catch(e){}})();<\/script><!--EDATA_END-->`;
+  src=src.replace('</head>',script+'\n</head>');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([src],{type:'text/html;charset=utf-8'}));a.download=`費用分攤系統v2${S.period?'_'+S.period:''}.html`;a.click();toast('✓ 已儲存檔案，資料已嵌入');
+}
+
+// ═══════════════════════════════════════════════════════
+//  MODAL / TOAST / NAV
+// ═══════════════════════════════════════════════════════
+let _mok = null;
+function showMod(title, body, onOk){
+  document.getElementById('m-title').textContent = title;
+  document.getElementById('m-body').innerHTML = body;
+  const btn = document.getElementById('m-ok');
+  btn.style.cssText = 'background:var(--blue);color:#fff;border-color:var(--blue)';
+  btn.textContent = '確認'; _mok = onOk; btn.onclick = ()=>{ if(_mok)_mok(); };
+  document.getElementById('mbg').classList.add('on');
+  setTimeout(()=>{ const f=document.querySelector('#m-body input'); if(f)f.focus(); }, 60);
+}
+function showConf(msg, onOk){
+  document.getElementById('m-title').textContent = '請確認';
+  document.getElementById('m-body').innerHTML = `<p style="font-size:13.5px;line-height:1.7;color:var(--text2)">${msg}</p>`;
+  const btn = document.getElementById('m-ok');
+  btn.style.cssText = 'background:var(--red);color:#fff;border-color:var(--red)';
+  btn.textContent = '確定執行'; _mok = ()=>{ closeMod(); onOk(); }; btn.onclick = ()=>{ if(_mok)_mok(); };
+  document.getElementById('mbg').classList.add('on');
+}
+function closeMod(){ document.getElementById('mbg').classList.remove('on'); }
+
+let _toastTimer;
+function toast(msg){
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('on');
+  clearTimeout(_toastTimer); _toastTimer = setTimeout(()=>el.classList.remove('on'), 2400);
+}
+
+function go(pg, el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.nav').forEach(n=>n.classList.remove('on'));
+  document.getElementById('page-'+pg).classList.add('on');
+  if(el) el.classList.add('on');
+  if(pg==='result') renderResult();
+  if(pg==='analysis') renderAnalysis();
+  if(pg==='validate') runValidation();
+  if(pg==='history') renderVersionList();
+  if(pg==='cloud') loadGsConfig();
+}
+function goImport(){ go('import', document.getElementById('nav-import')); }
+
+// ═══════════════════════════════════════════════════════
+//  PRINT
+// ═══════════════════════════════════════════════════════
+function printPage(){
+  const pid='_print_'+Date.now();
+  const div=document.createElement('div');div.id=pid;
+  div.innerHTML=`<h2 style="font-size:15px;font-weight:700;margin-bottom:4px">費用分攤結果</h2>${S.period?`<p style="font-size:12px;color:#666;margin-bottom:14px">分攤期間：${esc(S.period)}</p>`:''}<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">${document.getElementById('result-metrics').innerHTML}</div>${document.getElementById('result-wrap').innerHTML}`;
+  div.style.cssText='display:none';document.body.appendChild(div);
+  const st=document.createElement('style');st.id='_ps';
+  st.textContent=`@media print{body>*:not(#${pid}){display:none!important}#${pid}{display:block!important;position:fixed;inset:0;background:#fff;padding:20px;font-size:12px;font-family:Arial,sans-serif;overflow:auto;z-index:99999}.rt-hd,.rt-row,.rt-ft{display:flex!important}.rc{padding:4px 8px!important;font-size:11px!important}.mcard{background:#f5f5f5!important;border-radius:6px;padding:10px 12px}.mcard-val{font-size:16px!important;font-weight:700}}`;
+  document.head.appendChild(st);window.print();setTimeout(()=>{div.remove();st.remove();},2000);
+}
+
+// ═══════════════════════════════════════════════════════
+//  RESET
+// ═══════════════════════════════════════════════════════
+function confirmReset(){
+  showMod('重置確認',`
+    <p style="font-size:13px;color:var(--text2);margin-bottom:12px">確定清除所有資料並恢復預設值？此操作無法復原。</p>
+    <div class="mf"><label>請輸入「確認重置」以繼續</label><input type="text" id="reset-confirm" placeholder="確認重置"></div>
+  `,()=>{
+    const v = document.getElementById('reset-confirm').value.trim();
+    if(v !== '確認重置'){ toast('輸入文字不符，已取消'); return; }
+    localStorage.removeItem('alloc_v4'); location.reload();
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+//  KEYBOARD SHORTCUTS
+// ═══════════════════════════════════════════════════════
+document.addEventListener('keydown', e=>{
+  if(e.key==='Enter' && document.getElementById('mbg').classList.contains('on')){ if(_mok)_mok(); return; }
+  if(e.key==='Escape') closeMod();
+  if((e.ctrlKey||e.metaKey) && e.key==='s'){ e.preventDefault(); save(); toast('✓ 已手動儲存'); }
+});
+
+// ═══════════════════════════════════════════════════════
+//  RENDER ALL + INIT
+// ═══════════════════════════════════════════════════════
+function renderAll(){
+  renderLease();
+  renderHc();
+  renderEmp();
+  renderCost();
+  renderResult();
+}
+
+load();
+loadGsConfig();
+renderAll();
+</script>
+</body>
+</html>
